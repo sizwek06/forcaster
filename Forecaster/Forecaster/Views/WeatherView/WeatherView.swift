@@ -22,16 +22,15 @@ struct WeatherView: View {
                     Image("sea_sunnypng")
                         .resizable()
                         .frame(height: UIScreen.main.bounds.width - 20 / 5)
-                        .padding(.leading, -1)
-                    
-                    // To remove the Orange line next to shoreline
+                        .padding(.leading, -1) // To remove the Orange line next to shoreline
+                        .scaledToFill()
                     VStack {
                         Text("25°")
-                            .font(.custom(WeatherConstants.sfProRounded,
+                            .font(.custom(WeatherConstants.sfProBold,
                                           size: dynamicHeaderSize))
                             .foregroundColor(.white)
                         Text("Sunny".uppercased())
-                            .font(.custom(WeatherConstants.sfProRounded,
+                            .font(.custom(WeatherConstants.sfProBold,
                                           size: dynamicSubheaderSize))
                             .foregroundColor(.white)
                     }
@@ -48,7 +47,7 @@ struct WeatherView: View {
                         currentText(degrees: "19°", text: "max")
                             .padding(.leading, 75)
                     }
-                    .background(.currentStack)
+                    .background(Color.clearStackColor)
                     .frame(width: WeatherConstants.returnDesiredWidth())
                     
                     Rectangle()
@@ -66,10 +65,10 @@ struct WeatherView: View {
                 createForecastCell(day: "Saturday", condition: "clear", degrees: "25°")
             }
             .frame(width: WeatherConstants.returnDesiredWidth())
-            .background(.currentStack)
+            .background(Color.clearStackColor)
         }
         .edgesIgnoringSafeArea(.all)
-        .background(.currentStack)
+        .background(Color.clearStackColor)
     }
     
     func currentText(degrees: String, text: String) -> some View {
@@ -110,7 +109,7 @@ struct WeatherView: View {
                 .padding(.trailing, 10)
                 .padding(.leading, 100)
         }
-        .background(.currentStack)
+        .background(Color.clearStackColor)
     }
     
     func createForecastTable() -> some View {
@@ -124,7 +123,7 @@ struct WeatherView: View {
         .listStyle(.inset)
         .listRowInsets(.init(top: 10, leading: 23, bottom: 0, trailing: 25))
         .listRowSeparator(.hidden)
-        .background(.currentStack)
+        .background(Color.clearStackColor)
     }
 }
 

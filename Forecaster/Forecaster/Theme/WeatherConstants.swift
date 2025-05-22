@@ -23,9 +23,7 @@ struct WeatherConstants {
 
 extension Color {
     
-    static var appearanceColor: Color { Color(UIColor(named: "AppearanceColor") ?? UIColor(Color.black)) }
-    static var generalBackground: Color { Color(UIColor(named: "GeneralBackround") ?? UIColor(Color.white)) }
-    static var graytextColor: Color { Color(UIColor(named: "GreyText") ?? UIColor(Color.white)) }
-    static var currentStackColor: Color { Color(UIColor(named: "currentStackColor") ?? UIColor(Color.white)) }
-    // TODO: Add default color to currentStackColor
+    static var clearStackColor = Color(UIColor(named: "clearStackColor") ?? UIColor(Color.blue))
+    static var rainyStackColor: Color { Color(UIColor(named: "rainyStackColor") ?? UIColor(Color.gray)) }
+    static var cloudyStackColor: Color { Color(UIColor(named: "cloudyStackColor") ?? UIColor(Color.gray)) }
 }
