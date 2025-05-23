@@ -27,6 +27,8 @@ class ContentViewModel: NSObject, ObservableObject {
     let locationManager: CLLocationManager!
     let apiClient: WeatherApiProtocol!
     
+    var dt: String?
+    
     @Published var forecastData: [ForecastList] = []
     
     public init(apiClient: WeatherApiProtocol = WeatherApiClient(),
@@ -56,7 +58,7 @@ class ContentViewModel: NSObject, ObservableObject {
                 
                 await MainActor.run {
                     print("Current weather: \(self.forecastData)")
-                    
+                    self.dt = weather.date
                     self.viewState = .weatherReceived
                 }
             } catch let error as WeatherError {

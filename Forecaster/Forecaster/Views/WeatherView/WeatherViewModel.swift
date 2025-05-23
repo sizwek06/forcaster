@@ -14,12 +14,15 @@ class WeatherViewModel: NSObject, ObservableObject {
     
     var todayWeatherDetails: TodaysWeatherDetails
     @Published var forecastData: [ForecastList] = []
+    @Published var dt: String
     
     init(weatherDetails: TodaysWeatherDetails,
-         weatherForcast: [ForecastList]) {
+         weatherForcast: [ForecastList],
+         dt: String) {
         
         self.todayWeatherDetails = weatherDetails
         self.forecastData = weatherForcast
+        self.dt = dt
     }
     
     func getForecastCellWeatherIcon(weatherId: Int) -> String {

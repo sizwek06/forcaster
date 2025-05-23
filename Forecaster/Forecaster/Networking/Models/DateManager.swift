@@ -10,12 +10,15 @@ import Foundation
 enum DateManager: String {
 
     case day = "EEEE"
+    case date = "EEEE, MMM d"
 
     func stringFrom(date: Date) -> String {
         let dateFormatter = DateFormatter()
         switch self {
         case .day:
             dateFormatter.dateFormat = DateManager.day.rawValue
+        case .date:
+            dateFormatter.dateFormat = DateManager.date.rawValue
         }
         return dateFormatter.string(from: date)
     }

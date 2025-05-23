@@ -31,6 +31,7 @@ struct WeatherView: View {
                 
             ScrollView {
                     createCurrentForecastTableView()
+                    createTimeStampUpdate()
                 }
                 .background(setupViewTheme().backgroundColor)
             }
@@ -102,6 +103,17 @@ struct WeatherView: View {
         .padding(.bottom, 10)
         .padding(.top, 5)
         .frame(minWidth: 75, alignment: .leading)
+    }
+    
+    func createTimeStampUpdate() -> some View {
+        HStack() {
+            Text("Time updated: \(self.viewModel.dt)")
+                .multilineTextAlignment(.trailing)
+                .dynamicTypeSize(.small)
+                .italic()
+                .foregroundStyle(.white)
+                .padding(.leading, 120)
+        }
     }
     
     func createCurrentForecastView() -> some View {
@@ -219,7 +231,7 @@ struct WeatherView: View {
                                                       ForecastList(dt: 1748379600, temp: Temp(temp: 15.56),
                                                                    weather: [Weather(id: 100)]),
                                                       ForecastList(dt: 1748390400, temp: Temp(temp: 15.13),
-                                                                   weather: [Weather(id: 800)])]
+                                                                   weather: [Weather(id: 800)])], dt: "Tuesday, May 23"
                                     )
     
      WeatherView(viewModel: viewModel)

@@ -74,18 +74,21 @@ struct ContentView: View {
     
     func setupWeatherViewModel() -> WeatherViewModel {
         
-        guard let weatherDetails = self.viewModel.weatherDetails else {
+        guard let weatherDetails = self.viewModel.weatherDetails,
+        let dt = self.viewModel.dt else {
             
             return WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: "Unknown City",
                                                                          minTemperature: "0",
                                                                          currentTemperature: "0",
                                                                          maxTemperature: "0",
                                                                          id: 800),
-                                    weatherForcast: self.viewModel.createFiveDayForecast())
+                                    weatherForcast: self.viewModel.createFiveDayForecast(),
+                                    dt: "Some date, sorry")
         }
         
         return WeatherViewModel(weatherDetails: weatherDetails,
-                                weatherForcast: self.viewModel.createFiveDayForecast())
+                                weatherForcast: self.viewModel.createFiveDayForecast(),
+                                dt: dt)
         }
 }
 
