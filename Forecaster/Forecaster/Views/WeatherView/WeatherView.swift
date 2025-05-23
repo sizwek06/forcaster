@@ -16,6 +16,9 @@ struct WeatherView: View {
     
     @ObservedObject var viewModel: WeatherViewModel
     
+    @State var isShowing = false
+    @State var currentWeather = "clear"
+    
     init(viewModel: WeatherViewModel) {
         self.viewModel = viewModel
     }
@@ -30,9 +33,13 @@ struct WeatherView: View {
                     createCurrentForecastView()
                 
             ScrollView {
+                    Spacer()
                     createCurrentForecastTableView()
                     createTimeStampUpdate()
+                    createAddButton()
+                // TODO: Update upon new city request
                 }
+                .scrollContentBackground(.hidden)
                 .background(setupViewTheme().backgroundColor)
             }
             .toolbar {
@@ -42,7 +49,7 @@ struct WeatherView: View {
                             // do something
                         }) {
                             VStack(spacing: 5) {
-                                Image(systemName: "cloud.sun.fill")
+                                Image(systemName: getToolBarWeatherIcon())
                                 Text("5-Day Forecast")
                                     .font(.subheadline)
                             }
@@ -53,7 +60,7 @@ struct WeatherView: View {
                             // do something
                         }) {
                             VStack(spacing: 5) {
-                                Image(systemName: "star.fill")
+                                Image(systemName: isShowing ? "star" : "star.fill")
                                 Text("Faves")
                                     .font(.subheadline)
                             }
@@ -63,7 +70,13 @@ struct WeatherView: View {
                 }
             }
             .edgesIgnoringSafeArea(.top)
-            .background(setupViewTheme().backgroundColor)
+            .toolbarBackground(setupViewTheme().backgroundColor,
+                               for: .bottomBar)
+            .toolbarBackground(.visible, for: .bottomBar)
+        }
+        .background(setupViewTheme().backgroundColor)
+        .onAppear {
+            isShowing = true
         }
     }
     
@@ -86,6 +99,13 @@ struct WeatherView: View {
                                   size: dynamicSubheaderSize))
                     .foregroundColor(.white)
             }
+            
+            Image(systemName: "plus.circle")
+                .resizable()
+                .frame(width: 45, height: 45)
+                .padding(.leading, 290)
+                .padding(.bottom, 300)
+                .foregroundStyle(.white)
         }
     }
     
@@ -114,6 +134,21 @@ struct WeatherView: View {
                 .foregroundStyle(.white)
                 .padding(.leading, 120)
         }
+    }
+    
+    func createAddButton() -> some View {
+        Button(action: {
+            // Add city to persistence
+        }) {
+            Text("Add City")
+              .frame(maxWidth: 250)
+              .frame(height: 50)
+              .foregroundColor(.white)
+              .background(.orange)
+              .cornerRadius(10)
+        }
+        .shadow(color: .red,
+                radius: 21, y: 9)
     }
     
     func createCurrentForecastView() -> some View {
@@ -193,10 +228,22 @@ struct WeatherView: View {
         }
     }
     
+    func getToolBarWeatherIcon() -> String {
+        
+        switch viewModel.todayWeatherDetails.id {
+        case 200...799:
+            return self.isShowing ? "cloud.rain.fill" : "cloud.rain"
+        case 800...899:
+            return self.isShowing ? "cloud.sun.fill" : "cloud.sun"
+        default:
+            return self.isShowing ? "sun.horizon.fill" : "sun.horizon"
+        }
+    }
+    
     func setupViewTheme() -> WeatherViewStyler {
         switch viewModel.todayWeatherDetails.id {
             case 200...799:
-                return WeatherViewStyler(backgroundImage: "rainyStackColor",
+            return WeatherViewStyler(backgroundImage: "rainyStackColor",
                                          mainImage: "sea_rainy",
                                          currentCondition: "Rainy",
                                          backgroundColor: Color.rainyStackColor)
@@ -221,7 +268,7 @@ struct WeatherView: View {
                                                                            minTemperature: "15°",
                                                                           currentTemperature: "17°",
                                                                           maxTemperature: "25°",
-                                                                          id: 100),
+                                                                          id: 200),
                                      weatherForcast: [ForecastList(dt: 1748120400, temp: Temp(temp: 18.63),
                                                                    weather: [Weather(id: 205)]),
                                                       ForecastList(dt: 1748206800, temp: Temp(temp: 15.49),
