@@ -10,6 +10,10 @@ import UIKit
 
 struct WeatherConstants {
     
+    // MARK: API Items
+    static let apiKey = Bundle.main.infoDictionary?["API_KEY"] ?? ""
+    static let generalUnknownError = "An Unknown Error has occurred"
+    
     // MARK: Fonts
     static let sfPro = "SF-ProText"
     static let sfProRounded = "SFProRounded-Bold"
