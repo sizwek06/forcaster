@@ -19,12 +19,15 @@ struct WeatherView: View {
     @State var isShowing = false
     @State var currentWeather = "clear"
     
+    @State private var citySearchActive = false
+    @State private var cityText = ""
+    
     init(viewModel: WeatherViewModel) {
         self.viewModel = viewModel
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             
             VStack(spacing: -10) {
                     // Background header Image
@@ -36,7 +39,7 @@ struct WeatherView: View {
                     Spacer()
                     createCurrentForecastTableView()
                     createTimeStampUpdate()
-                    createAddButton()
+                    if citySearchActive { createAddButton() }
                 // TODO: Update upon new city request
                 }
                 .scrollContentBackground(.hidden)
@@ -74,9 +77,21 @@ struct WeatherView: View {
                                for: .bottomBar)
             .toolbarBackground(.visible, for: .bottomBar)
         }
+        .searchable(text: $cityText,
+                    isPresented: $citySearchActive,
+                    prompt: "Search for your city")
+        .accentColor(.white)
         .background(setupViewTheme().backgroundColor)
+        .onChange(of: cityText) {
+            WeatherLocation.sharedInstance.city = cityText
+            
+            Task {
+                await self.viewModel.getCityWeather()
+            }
+        }
         .onAppear {
             isShowing = true
+            citySearchActive = false
         }
     }
     
@@ -99,13 +114,6 @@ struct WeatherView: View {
                                   size: dynamicSubheaderSize))
                     .foregroundColor(.white)
             }
-            
-            Image(systemName: "plus.circle")
-                .resizable()
-                .frame(width: 45, height: 45)
-                .padding(.leading, 290)
-                .padding(.bottom, 300)
-                .foregroundStyle(.white)
         }
     }
     
@@ -127,7 +135,7 @@ struct WeatherView: View {
     
     func createTimeStampUpdate() -> some View {
         HStack() {
-            Text("Time updated: \(self.viewModel.dt)")
+            Text("\(self.viewModel.todayWeatherDetails.city) updated: \(self.viewModel.dt)")
                 .multilineTextAlignment(.trailing)
                 .dynamicTypeSize(.small)
                 .italic()
@@ -163,7 +171,7 @@ struct WeatherView: View {
                 .padding(.leading, 65)
                 currentText(degrees: self.viewModel.todayWeatherDetails.maxTemperature,
                             text: "max")
-                .padding(.leading, 75)
+                .padding(.leading, 70)
             }
             .background(setupViewTheme().backgroundColor)
             .frame(width: WeatherConstants.returnDesiredWidth())
@@ -201,7 +209,7 @@ struct WeatherView: View {
                 .resizable()
                 .frame(width: 30, height: 30)
                 .foregroundColor(.white)
-                .padding(.leading, 65)
+                .padding(.leading, 55)
             Text(degrees)
                 .font(.custom(WeatherConstants.sfProRegular,
                               size: dynamicTextSize))
@@ -268,7 +276,7 @@ struct WeatherView: View {
                                                                            minTemperature: "15°",
                                                                           currentTemperature: "17°",
                                                                           maxTemperature: "25°",
-                                                                          id: 200),
+                                                                          id: 100),
                                      weatherForcast: [ForecastList(dt: 1748120400, temp: Temp(temp: 18.63),
                                                                    weather: [Weather(id: 205)]),
                                                       ForecastList(dt: 1748206800, temp: Temp(temp: 15.49),
