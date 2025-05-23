@@ -14,22 +14,28 @@ struct WeatherView: View {
     @ScaledMetric(relativeTo: .title) var dynamicTitleSize = 29
     @ScaledMetric(relativeTo: .body) var dynamicTextSize = 15
     
+    @ObservedObject var viewModel: WeatherViewModel
+    
+    init(viewModel: WeatherViewModel) {
+        self.viewModel = viewModel
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: -10) {
                 // Background header Image
                 ZStack {
-                    Image("sea_sunnypng")
+                    Image(setupViewTheme().mainImage)
                         .resizable()
                         .frame(height: UIScreen.main.bounds.width - 20 / 5)
-                        .padding(.leading, -1) // To remove the Orange line next to shoreline
+                        .padding(.leading, -1) // To remove the Orange line next to shoreline (sunny.png)
                         .scaledToFill()
                     VStack {
-                        Text("25°")
+                        Text(self.viewModel.todayWeatherDetails.currentTemperature)
                             .font(.custom(WeatherConstants.sfProBold,
                                           size: dynamicHeaderSize))
                             .foregroundColor(.white)
-                        Text("Sunny".uppercased())
+                        Text(setupViewTheme().currentCondition.uppercased())
                             .font(.custom(WeatherConstants.sfProBold,
                                           size: dynamicSubheaderSize))
                             .foregroundColor(.white)
@@ -40,14 +46,17 @@ struct WeatherView: View {
                 VStack(spacing: 5) {
                     HStack(spacing: 5) {
                         Spacer()
-                        currentText(degrees: "19°", text: "min")
+                        currentText(degrees: self.viewModel.todayWeatherDetails.minTemperature,
+                                    text: "min")
                             .padding(.leading, -15)
-                        currentText(degrees: "19°", text: "Current")
+                        currentText(degrees: self.viewModel.todayWeatherDetails.currentTemperature,
+                                    text: "Current")
                             .padding(.leading, 65)
-                        currentText(degrees: "19°", text: "max")
+                        currentText(degrees: self.viewModel.todayWeatherDetails.maxTemperature,
+                                    text: "max")
                             .padding(.leading, 75)
                     }
-                    .background(Color.clearStackColor)
+                    .background(setupViewTheme().backgroundColor)
                     .frame(width: WeatherConstants.returnDesiredWidth())
                     
                     Rectangle()
@@ -58,17 +67,17 @@ struct WeatherView: View {
             
             VStack(alignment: .leading, spacing: 10) {
                 Spacer()
-                createForecastCell(day: "Tuesday", condition: "clear", degrees: "25°")
-                createForecastCell(day: "Wednesday", condition: "clear", degrees: "25°")
-                createForecastCell(day: "Thursday", condition: "clear", degrees: "25°")
-                createForecastCell(day: "Friday", condition: "clear", degrees: "25°")
-                createForecastCell(day: "Saturday", condition: "clear", degrees: "25°")
+                ForEach(self.viewModel.forecastData) { forecast in
+                    createForecastCell(day: forecast.date,
+                                       condition: forecast.weather[0].id,
+                                       degrees: forecast.temperature)
+                }
             }
             .frame(width: WeatherConstants.returnDesiredWidth())
-            .background(Color.clearStackColor)
+            .background(setupViewTheme().backgroundColor)
         }
         .edgesIgnoringSafeArea(.all)
-        .background(Color.clearStackColor)
+        .background(setupViewTheme().backgroundColor)
     }
     
     func currentText(degrees: String, text: String) -> some View {
@@ -87,7 +96,7 @@ struct WeatherView: View {
         .frame(minWidth: 75, alignment: .leading)
     }
     
-    func createForecastCell(day: String, condition: String, degrees: String) -> some View {
+    func createForecastCell(day: String, condition: Int, degrees: String) -> some View {
         HStack {
             Text(day)
                 .multilineTextAlignment(.leading)
@@ -96,7 +105,7 @@ struct WeatherView: View {
                 .foregroundColor(.white)
                 .lineLimit(1)
                 .frame(minWidth: 100, alignment: .leading)
-            Image(condition)
+            Image(self.getForecastCellWeatherIcon(weatherId: condition))
                 .resizable()
                 .frame(width: 30, height: 30)
                 .foregroundColor(.white)
@@ -109,25 +118,62 @@ struct WeatherView: View {
                 .padding(.trailing, 10)
                 .padding(.leading, 100)
         }
-        .background(Color.clearStackColor)
+        .background(setupViewTheme().backgroundColor)
+        .padding(.bottom, 15)
     }
     
-    func createForecastTable() -> some View {
-        List {
-            createForecastCell(day: "Tuesday", condition: "clear", degrees: "25°")
-            createForecastCell(day: "Wednesday", condition: "clear", degrees: "25°")
-            createForecastCell(day: "Thursday", condition: "clear", degrees: "25°")
-            createForecastCell(day: "Friday", condition: "clear", degrees: "25°")
-            createForecastCell(day: "Saturday", condition: "clear", degrees: "25°")
+    func getForecastCellWeatherIcon(weatherId: Int) -> String {
+        
+        switch weatherId {
+        case 200...799:
+            return "rain"
+        case 800...899:
+            return "partlysunny"
+        default:
+            return "clear"
         }
-        .listStyle(.inset)
-        .listRowInsets(.init(top: 10, leading: 23, bottom: 0, trailing: 25))
-        .listRowSeparator(.hidden)
-        .background(Color.clearStackColor)
     }
-}
+    
+    func setupViewTheme() -> WeatherViewStyler {
+        switch viewModel.todayWeatherDetails.id {
+            case 200...799:
+                return WeatherViewStyler(backgroundImage: "rainyStackColor",
+                                         mainImage: "sea_rainy",
+                                         currentCondition: "Rainy",
+                                         backgroundColor: Color.rainyStackColor)
+            case 800...899:
+                return WeatherViewStyler(backgroundImage: "cloudyStackColor",
+                                         mainImage: "sea_cloudy",
+                                         currentCondition: "Cloudy",
+                                         backgroundColor: Color.cloudyStackColor)
+        default:
+            return WeatherViewStyler(backgroundImage: "cloudyStackColor",
+                                     mainImage: "sea_sunnypng",
+                                     currentCondition: "Sunny",
+                                     backgroundColor: Color.clearStackColor)
+            }
+        }
+    }
 
 
 #Preview {
-    WeatherView()
+    
+    let viewModel = WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: "Land of Oo",
+                                                                           minTemperature: "15°",
+                                                                          currentTemperature: "17°",
+                                                                          maxTemperature: "25°",
+                                                                          id: 800),
+                                     weatherForcast: [ForecastList(dt: 1748120400, temp: Temp(temp: 18.63),
+                                                                   weather: [Weather(id: 205)]),
+                                                      ForecastList(dt: 1748206800, temp: Temp(temp: 15.49),
+                                                                   weather: [Weather(id: 305)]),
+                                                      ForecastList(dt: 1748293200, temp: Temp(temp: 13.28),
+                                                                   weather: [Weather(id: 805)]),
+                                                      ForecastList(dt: 1748379600, temp: Temp(temp: 15.56),
+                                                                   weather: [Weather(id: 100)]),
+                                                      ForecastList(dt: 1748390400, temp: Temp(temp: 15.13),
+                                                                   weather: [Weather(id: 800)])]
+                                    )
+    
+     WeatherView(viewModel: viewModel)
 }
