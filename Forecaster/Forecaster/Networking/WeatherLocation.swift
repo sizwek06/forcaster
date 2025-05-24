@@ -11,6 +11,7 @@ public class WeatherLocation {
     
     var lat: String = ""
     var long: String = ""
+    var city: String = ""
     
     public static let sharedInstance = WeatherLocation()
     

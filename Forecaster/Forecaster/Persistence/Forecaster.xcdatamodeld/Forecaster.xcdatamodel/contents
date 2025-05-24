@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
-    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class">
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23507" systemVersion="24E263" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="CityForecast" representedClassName="CityForecast" parentEntity="FavouriteCity" syncable="YES">
+        <attribute name="condition" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="currentTemperature" attributeType="String"/>
+        <attribute name="dayOfWeek" attributeType="String"/>
+        <relationship name="relationship" maxCount="1" deletionRule="Nullify" destinationEntity="FavouriteCity" inverseName="forecast" inverseEntity="FavouriteCity"/>
     </entity>
-    <elements>
-        <element name="Item" positionX="-63" positionY="-18" width="128" height="44"/>
-    </elements>
+    <entity name="FavouriteCity" representedClassName="FavouriteCity" syncable="YES">
+        <attribute name="cityName" attributeType="String"/>
+        <attribute name="currentTemp" attributeType="String"/>
+        <attribute name="itemIdentifier" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="maxTemp" attributeType="String"/>
+        <attribute name="minTemp" attributeType="String"/>
+        <attribute name="timeStamp" attributeType="String"/>
+        <relationship name="forecast" toMany="YES" deletionRule="Nullify" destinationEntity="CityForecast" inverseName="relationship" inverseEntity="CityForecast"/>
+    </entity>
 </model>
