@@ -56,12 +56,14 @@ enum WeatherEndpoints: EndpointProvider {
 
     case getCurrent
     case getForecast
+    case getCityCurrent
+    case getCityForecast
     
     var path: String {
         switch self {
-        case .getCurrent:
+        case .getCurrent, .getCityCurrent:
             return "/data/2.5/weather"
-        case .getForecast:
+        case .getForecast, .getCityForecast:
             return "/data/2.5/forecast"
             // MARK: - [Sizwe K]: forecast5 doesn't exist anymore - "cod": "404", "message": "Internal error"
         }
@@ -69,7 +71,7 @@ enum WeatherEndpoints: EndpointProvider {
 
     var method: RequestMethod {
         switch self {
-        case .getCurrent, .getForecast:
+        case .getCurrent, .getForecast, .getCityForecast, .getCityCurrent:
             return .get
         }
     }
@@ -86,6 +88,12 @@ enum WeatherEndpoints: EndpointProvider {
                     URLQueryItem(name: "appid",
                                          value: WeatherConstants.apiKey as? String),
                     URLQueryItem(name: "cnt", value: "40")]
+        case .getCityCurrent, .getCityForecast:
+            return [URLQueryItem(name: "units",
+                                 value: "metric"),
+                    URLQueryItem(name: "appid",
+                                         value: WeatherConstants.apiKey as? String),
+                    URLQueryItem(name: "q", value: "\(WeatherLocation.sharedInstance.city)")]
         }/// MARK: - [Sizwe K]: I looked at 3 hour intervals by 8 and by 5, landed on 40 as a safe bet
     }
 }

@@ -9,12 +9,12 @@ import SwiftUI
 
 @main
 struct ForecasterApp: App {
-    let persistenceController = PersistenceController.shared
-
+    @StateObject private var manager: DataManager = DataManager()
+    
     var body: some Scene {
         WindowGroup {
             ContentView(viewModel: ContentViewModel())
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environment(\.managedObjectContext, manager.container.viewContext)
         }
     }
 }

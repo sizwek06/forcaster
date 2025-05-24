@@ -15,12 +15,10 @@ struct ForecastList: Codable, Identifiable {
     var weather: [Weather]
     
     var temperature: String {
-//        guard let max = temp.max, let min = temp.min else { return "" }
         return "\(Int(temp.temp))ºC"
     }
     
     var date: String {
-//        guard let date = dt else { return "" }
         let dateValue = dt.dateFromInt
         return DateManager.day.stringFrom(date: Date()) == DateManager.day.stringFrom(date: dateValue) ? "Today" : DateManager.day.stringFrom(date: dateValue)
     }
