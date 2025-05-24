@@ -32,6 +32,27 @@ class WeatherViewModel: NSObject, ObservableObject {
         self.dt = dt
     }
     
+    func getFavCityForecast(favouriteCity: String, viewContext: NSManagedObjectContext) {
+        let req: NSFetchRequest<CityForecast> = CityForecast.fetchRequest()
+        
+        req.predicate = NSPredicate(format: "relationship.cityName == %@", favouriteCity)
+        
+        do {
+            let forecasts = try viewContext.fetch(req)
+            print("✅ Found \(forecasts.count) forecasts")
+            
+            self.forecastData.removeAll()
+            
+            for forecast in forecasts {
+                self.forecastData.append(ForecastList(dt: Int(forecast.dayOfWeek),
+                                                      temp: Temp(temp: forecast.currentTemperature),
+                                                      weather: [Weather(id: Int(forecast.condition))]))
+            }
+        } catch {
+            print("⛔️ Failed to fetch forecasts: \(error.localizedDescription)")
+        }
+    }
+    
     func getFavouriteCities(fetchedResults: FetchedResults<FavouriteCity>) -> [FavouriteCity] {
         
         return Dictionary(grouping: fetchedResults, by: { $0.cityName})
@@ -42,12 +63,16 @@ class WeatherViewModel: NSObject, ObservableObject {
         let favouriteCity = FavouriteCity(context: viewContext)
         
         favouriteCity.cityName = self.todayWeatherDetails.city
-        favouriteCity.timeStamp = self.dt.convertToUnit16()
+        favouriteCity.timeStamp = Int32(self.dt)
         
         favouriteCity.minTemp = self.todayWeatherDetails.minTemperature
         favouriteCity.maxTemp = self.todayWeatherDetails.maxTemperature
         favouriteCity.currentTemp = self.todayWeatherDetails.currentTemperature
-         
+        
+        favouriteCity.cityCondition = Int16(self.todayWeatherDetails.id)
+        print("VM cityCondition \(self.todayWeatherDetails.id)")
+        print("VM Int16 cityCondition \(Int16(self.todayWeatherDetails.id))")
+        print("entity cityCondition \(favouriteCity.cityCondition)")
         favouriteCity.itemIdentifier = UUID()
         
         return favouriteCity
@@ -59,14 +84,14 @@ class WeatherViewModel: NSObject, ObservableObject {
         for forecast in self.forecastData {
             let cityForecast = CityForecast(context: viewContext)
             
-            cityForecast.dayOfWeek = self.dt.convertToUnit16()
+            cityForecast.dayOfWeek = Int32(forecast.dt)
             cityForecast.currentTemperature = forecast.temp.temp
             cityForecast.condition = Int16(forecast.weather[0].id)
 
             cityForecast.cityName = weatherD.city
             cityForecast.relationship = returnFavCity(viewContext: viewContext)
             
-            cityForecast.timeStamp = self.dt.convertToUnit16()
+            cityForecast.timeStamp = Int32(self.dt)
             
             cityForecast.minTemp = weatherD.minTemperature
             cityForecast.maxTemp = weatherD.maxTemperature
@@ -183,6 +208,7 @@ class WeatherViewModel: NSObject, ObservableObject {
                                          mainImage: "sea_rainy",
                                          currentCondition: "Rainy",
                                          backgroundColor: Color.rainyStackColor)
+            // TODO: Check why searching for city doesn't change the toolbar colour
             case 800...899:
                 return WeatherViewStyler(backgroundImage: "cloudyStackColor",
                                          mainImage: "sea_cloudy",

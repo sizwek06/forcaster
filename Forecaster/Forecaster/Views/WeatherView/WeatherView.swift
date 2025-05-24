@@ -32,7 +32,7 @@ struct WeatherView: View {
     @State private var cityText = ""
     
     @State private var isFavePopoverPresented: Bool = false
-    @State private var selectedCity: FavouriteCity? = nil
+    @State private var selectedCity: TodaysWeatherDetails? = nil
     @State var cityListHeight: CGFloat = 0
     
     init(viewModel: WeatherViewModel) {
@@ -62,7 +62,7 @@ struct WeatherView: View {
                     HStack (spacing: 50) {
                         Button(action: {
                             self.isFavePopoverPresented = false
-                            self.isWeatherShowing = true
+                            self.isWeatherShowing = !self.isFavePopoverPresented
                         }) {
                             VStack(spacing: 5) {
                                 Image(systemName: getToolBarWeatherIcon())
@@ -74,7 +74,7 @@ struct WeatherView: View {
                         
                         Button(action: {
                             self.isFavePopoverPresented = true
-                            self.isWeatherShowing = false
+                            self.isWeatherShowing = !self.isFavePopoverPresented
                             
                             print("Menu array has: \(self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))")
                             
@@ -91,7 +91,7 @@ struct WeatherView: View {
                             
                             FavouritesListView(selection: $selectedCity,
                                                cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
-                            
+                            // TODO: ProgressView for loading
                         .presentationCompactAdaptation(.none)
                         }
                     }
@@ -100,7 +100,6 @@ struct WeatherView: View {
             .edgesIgnoringSafeArea(.top)
             .toolbarBackground(setupViewTheme().backgroundColor,
                                for: .bottomBar)
-            .toolbarBackground(.visible, for: .bottomBar)
         }
         .accentColor(.white)
         .background(setupViewTheme().backgroundColor)
@@ -128,7 +127,7 @@ struct WeatherView: View {
                     prompt: "")
         .searchFocused($citySearchFocus)
         .onSubmit(of: .search) {
-            
+            // TODO: ProgressView for loading
             if !self.cityText.isEmpty {
                 
                 WeatherLocation.sharedInstance.city = cityText
@@ -138,6 +137,12 @@ struct WeatherView: View {
                     await self.viewModel.getCityWeather()
                 }
             }
+        }
+        .onChange(of: selectedCity) {
+            self.viewModel.todayWeatherDetails = selectedCity ?? self.viewModel.todayWeatherDetails
+            
+            self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
+                                              viewContext: self.viewContext)
         }
     }
     
@@ -160,6 +165,14 @@ struct WeatherView: View {
                                   size: dynamicSubheaderSize))
                     .foregroundColor(.white)
             }
+            
+            Image(systemName: "arrow.clockwise.circle")
+                .resizable()
+                .frame(width: 35, height: 35)
+                .padding(.leading, 290)
+                .padding(.bottom, 300)
+                .foregroundStyle(.white)
+            // TODO: Use this to refresh weather info from API using q=cityName
         }
     }
     
@@ -204,35 +217,6 @@ struct WeatherView: View {
         }
         .shadow(color: .red,
                 radius: 21, y: 9)
-    }
-    
-    func addForecastToCoreDataCity(using city: FavouriteCity) {
-        
-        for forecast in self.viewModel.forecastData {
-            let cityForecast = CityForecast(context: viewContext)
-            
-            cityForecast.dayOfWeek = Int16(forecast.dt)
-            cityForecast.currentTemperature = forecast.temp.temp
-            cityForecast.condition = Int16(forecast.weather[0].id)
-
-            cityForecast.relationship = city
-        }
-        
-        do {
-            try viewContext.save()
-            print("Weather saved!")
-        } catch let error as NSError {
-            print("🔥 Save failed: \(error.localizedDescription)")
-            
-            if let detailedErrors = error.userInfo["NSDetailedErrors"] as? [NSError] {
-                for detailedError in detailedErrors {
-                    print("🛑 Detailed Error: \(detailedError.localizedDescription)")
-                    print("🔍 Info: \(detailedError.userInfo)")
-                }
-            } else {
-                print("🛑 General Info: \(error.userInfo)")
-            }
-        }
     }
     
     func createCurrentForecastView() -> some View {

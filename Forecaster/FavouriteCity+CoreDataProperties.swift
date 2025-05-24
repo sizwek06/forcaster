@@ -18,7 +18,7 @@ extension FavouriteCity {
 
     @NSManaged public var cityName: String
     @NSManaged public var itemIdentifier: UUID
-    @NSManaged public var timeStamp: Int16
+    @NSManaged public var timeStamp: Int32
     @NSManaged public var minTemp: String
     @NSManaged public var maxTemp: String
     @NSManaged public var currentTemp: String

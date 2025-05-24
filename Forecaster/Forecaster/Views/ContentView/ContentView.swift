@@ -25,7 +25,8 @@ struct ContentView: View {
                     }
                 }
                 .sheet(isPresented: self.$viewModel.showingError) {
-                    ErrorView(isPresented: self.$viewModel.showingError, errorTitle: self.viewModel.errorCode,
+                    ErrorView(isPresented: self.$viewModel.showingError,
+                              errorTitle: self.viewModel.errorCode,
                               errorDescription: self.viewModel.errorDescription)
                 }
                 .onDisappear {
@@ -46,19 +47,18 @@ struct ContentView: View {
         
         switch viewModel.viewState {
             
-        case .loading:
+        case .loading, .launch:
             LoadingView()
         case .weatherReceived:
             WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
         case .locationUnknown:
             // create weather view via storedData
+            // TODO: Check why the WeatherView flashes on clean install
             WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
         case .error:
             ErrorView(isPresented: self.$viewModel.showingError,
                       errorTitle: self.viewModel.errorCode,
                       errorDescription: self.viewModel.errorDescription)
-        case .launch:
-            LoadingView()
         }
     }
     
