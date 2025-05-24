@@ -10,7 +10,8 @@ import CoreData
 
 struct ContentView: View {
     @ObservedObject var viewModel: ContentViewModel
-
+    @Environment(\.managedObjectContext) var viewContext
+    
     var body: some View {
         VStack(alignment: .center) {
             getBody()
@@ -45,10 +46,19 @@ struct ContentView: View {
         
         switch viewModel.viewState {
             
-        case .loading, .locationUnknown:
+        case .loading:
             LoadingView()
         case .weatherReceived:
-            WeatherView(viewModel: self.setupWeatherViewModel())
+            WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
+        case .locationUnknown:
+            // create weather view via storedData
+            WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
+        case .error:
+            ErrorView(isPresented: self.$viewModel.showingError,
+                      errorTitle: self.viewModel.errorCode,
+                      errorDescription: self.viewModel.errorDescription)
+        case .launch:
+            LoadingView()
         }
     }
     
@@ -56,14 +66,14 @@ struct ContentView: View {
         self.viewModel.viewState = self.viewModel.checkLocationStatus()
         
         Task {
-            await self.viewModel.getWeather()
+            await self.viewModel.getWeather(viewContext: viewContext)
         }
     }
     
-    func setupWeatherViewModel() -> WeatherViewModel {
+    func setupWeatherWebservicesViewModel() -> WeatherViewModel {
         
         guard let weatherDetails = self.viewModel.weatherDetails,
-        let dt = self.viewModel.dt else {
+              let dt = self.viewModel.dt else {
             
             return WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: "Unknown City",
                                                                          minTemperature: "0",
@@ -71,13 +81,14 @@ struct ContentView: View {
                                                                          maxTemperature: "0",
                                                                          id: 800),
                                     weatherForcast: self.viewModel.createFiveDayForecast(),
-                                    dt: "Some date, sorry")
+                                    dt: Int(Date().timeIntervalSince1970))
+            // TODO: Handle the above as forecastData.isEmpty and focus user onto search bar
         }
         
         return WeatherViewModel(weatherDetails: weatherDetails,
                                 weatherForcast: self.viewModel.createFiveDayForecast(),
                                 dt: dt)
-        }
+    }
 }
 
 #Preview {

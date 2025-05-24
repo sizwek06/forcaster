@@ -13,7 +13,7 @@ class WeatherViewModel: NSObject, ObservableObject {
     
     @Published var todayWeatherDetails: TodaysWeatherDetails
     @Published var forecastData: [ForecastList] = []
-    @Published var dt: String
+    @Published var dt: Int
     
     var errorDescription: String?
     var errorCode: String?
@@ -23,7 +23,7 @@ class WeatherViewModel: NSObject, ObservableObject {
     init(apiClient: WeatherApiProtocol = WeatherApiClient(),
          weatherDetails: TodaysWeatherDetails,
          weatherForcast: [ForecastList],
-         dt: String) {
+         dt: Int) {
         
         self.apiClient = apiClient
         self.todayWeatherDetails = weatherDetails
@@ -35,7 +35,7 @@ class WeatherViewModel: NSObject, ObservableObject {
         let favouriteCity = FavouriteCity(context: viewContext)
         
         favouriteCity.cityName = self.todayWeatherDetails.city
-        favouriteCity.timeStamp = self.dt
+        favouriteCity.timeStamp = self.dt.convertToUnit16()
         
         favouriteCity.minTemp = self.todayWeatherDetails.minTemperature
         favouriteCity.maxTemp = self.todayWeatherDetails.maxTemperature
@@ -52,14 +52,14 @@ class WeatherViewModel: NSObject, ObservableObject {
         for forecast in self.forecastData {
             let cityForecast = CityForecast(context: viewContext)
             
-            cityForecast.dayOfWeek = forecast.date
-            cityForecast.currentTemperature = forecast.temperature
+            cityForecast.dayOfWeek = self.dt.convertToUnit16()
+            cityForecast.currentTemperature = forecast.temp.temp
             cityForecast.condition = Int16(forecast.weather[0].id)
 
             cityForecast.cityName = weatherD.city
             cityForecast.relationship = returnFavCity(viewContext: viewContext)
             
-            cityForecast.timeStamp = self.dt
+            cityForecast.timeStamp = self.dt.convertToUnit16()
             
             cityForecast.minTemp = weatherD.minTemperature
             cityForecast.maxTemp = weatherD.maxTemperature
@@ -85,14 +85,14 @@ class WeatherViewModel: NSObject, ObservableObject {
                 
                 await MainActor.run {
                     self.todayWeatherDetails = TodaysWeatherDetails(city: weather.name,
-                                                              minTemperature: weather.main.currentTemp,
-                                                              currentTemperature: weather.main.lowDescription,
-                                                               maxTemperature: weather.main.highDescription,
+                                                                    minTemperature: weather.main.lowDescription,
+                                                                    currentTemperature: weather.main.currentTemp,
+                                                                    maxTemperature: weather.main.highDescription,
                                                                id: weather.weather.first?.id ?? 800)
                     // TODO: Properly Unwrap above values?
                     
                     print("Current weather: \(self.forecastData)")
-                    self.dt = weather.date
+                    self.dt = weather.dt
                 }
             } catch let error as WeatherError {
                 await MainActor.run {
@@ -135,16 +135,16 @@ class WeatherViewModel: NSObject, ObservableObject {
         var tempArray: [ForecastList] = []
         
         for forecast in self.forecastData {
-            if existingDays.contains(forecast.date) {
+            if existingDays.contains(forecast.dt.dayOfWeekString) {
                 
                 tempArray[tempArray.count - 1] = forecast
                 
-                if let index = tempArray.firstIndex(where: { $0.date == forecast.date }) {
+                if let index = tempArray.firstIndex(where: { $0.dt.dayOfWeekString == forecast.dt.dayOfWeekString }) {
                     tempArray[index] = forecast
                 }
             } else {
                 tempArray.append(forecast)
-                existingDays.insert(forecast.date)
+                existingDays.insert(forecast.dt.dayOfWeekString)
             }
             
             if tempArray.count == 6 {

@@ -28,6 +28,7 @@ struct WeatherView: View {
     
     @State private var isRotating = 0.0
     @State private var citySearchActive = false
+    @FocusState private var citySearchFocus: Bool
     @State private var cityText = ""
     
     init(viewModel: WeatherViewModel) {
@@ -90,6 +91,7 @@ struct WeatherView: View {
             isShowing = true
             citySearchActive = false
             isShowingSaveButton = false
+            citySearchFocus = self.viewModel.forecastData.isEmpty
             
             for city in cityFetchedResults {
                 print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
@@ -106,7 +108,8 @@ struct WeatherView: View {
         }
         .searchable(text: $cityText,
                     isPresented: $citySearchActive,
-                    prompt: "Search for your city")
+                    prompt: "")
+        .searchFocused($citySearchFocus)
         .onSubmit(of: .search) {
             
             if !self.cityText.isEmpty {
@@ -161,7 +164,7 @@ struct WeatherView: View {
     
     func createTimeStampUpdate() -> some View {
         HStack() {
-            Text("'\(self.viewModel.todayWeatherDetails.city)' updated: \(self.viewModel.dt)")
+            Text("'\(self.viewModel.todayWeatherDetails.city)' updated: \(self.viewModel.dt.updatedWhenString)")
                 .multilineTextAlignment(.trailing)
                 .dynamicTypeSize(.small)
                 .italic()
@@ -191,8 +194,8 @@ struct WeatherView: View {
         for forecast in self.viewModel.forecastData {
             let cityForecast = CityForecast(context: viewContext)
             
-            cityForecast.dayOfWeek = forecast.date
-            cityForecast.currentTemperature = forecast.temperature
+            cityForecast.dayOfWeek = Int16(forecast.dt)
+            cityForecast.currentTemperature = forecast.temp.temp
             cityForecast.condition = Int16(forecast.weather[0].id)
 
             cityForecast.relationship = city
@@ -243,7 +246,7 @@ struct WeatherView: View {
         VStack(alignment: .leading, spacing: 10) {
             Spacer()
             ForEach(self.viewModel.forecastData) { forecast in
-                createForecastCell(day: forecast.date,
+                createForecastCell(day: forecast.dt.dayOfWeekString,
                                    condition: forecast.weather[0].id,
                                    degrees: forecast.temperature)
             }
@@ -327,7 +330,6 @@ struct WeatherView: View {
 
 
 #Preview {
-    
     let viewModel = WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: "Land of Oo",
                                                                            minTemperature: "15°",
                                                                           currentTemperature: "17°",
@@ -342,7 +344,8 @@ struct WeatherView: View {
                                                       ForecastList(dt: 1748379600, temp: Temp(temp: 15.56),
                                                                    weather: [Weather(id: 100)]),
                                                       ForecastList(dt: 1748390400, temp: Temp(temp: 15.13),
-                                                                   weather: [Weather(id: 800)])], dt: "Tuesday, May 23 at 4:46 PM"
+                                                                   weather: [Weather(id: 800)])],
+                                     dt: 1748055600
                                     )
     
      WeatherView(viewModel: viewModel)
