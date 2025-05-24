@@ -18,21 +18,11 @@ struct ForecastList: Codable, Identifiable {
         return "\(Int(temp.temp))ºC"
     }
     
-    var date: String {
-        let dateValue = dt.dateFromInt
-        return DateManager.day.stringFrom(date: Date()) == DateManager.day.stringFrom(date: dateValue) ? "Today" : DateManager.day.stringFrom(date: dateValue)
-    }
-
+   
     enum CodingKeys: String, CodingKey {
         case dt
         case weather
         case temp = "main"
-    }
-}
-
-extension Int {
-    var dateFromInt: Date {
-        Date(timeIntervalSince1970: TimeInterval(integerLiteral: Int64(self)))
     }
 }
 
