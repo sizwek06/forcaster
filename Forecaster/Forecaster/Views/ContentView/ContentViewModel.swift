@@ -27,6 +27,8 @@ class ContentViewModel: NSObject, ObservableObject {
     let locationManager: CLLocationManager!
     let apiClient: WeatherApiProtocol!
     
+    var dt: String?
+    
     @Published var forecastData: [ForecastList] = []
     
     public init(apiClient: WeatherApiProtocol = WeatherApiClient(),
@@ -42,21 +44,16 @@ class ContentViewModel: NSObject, ObservableObject {
         Task {
             do {
                 let weather = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: OpenWeather.self)
-                
-                guard let weatherMain = weather.main else {
-                    return
-                }
-                
-                self.weatherDetails = TodaysWeatherDetails(city: weather.name ?? "Land of Ooo",
-                                                          minTemperature: weatherMain.currentTemp,
-                                                          currentTemperature: weatherMain.lowDescription,
-                                                           maxTemperature: weatherMain.highDescription,
-                                                           id: weather.weather?.first?.id ?? 800)
-                // TODO: Properly Unwrap above values?
+        
+                self.weatherDetails = TodaysWeatherDetails(city: weather.name,
+                                                          minTemperature: weather.main.currentTemp,
+                                                          currentTemperature: weather.main.lowDescription,
+                                                           maxTemperature: weather.main.highDescription,
+                                                           id: weather.weather.first?.id ?? 800)
                 
                 await MainActor.run {
                     print("Current weather: \(self.forecastData)")
-                    
+                    self.dt = weather.date
                     self.viewState = .weatherReceived
                 }
             } catch let error as WeatherError {
