@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUICore
+import CoreData
 
 class WeatherViewModel: NSObject, ObservableObject {
     
@@ -30,6 +31,51 @@ class WeatherViewModel: NSObject, ObservableObject {
         self.dt = dt
     }
     
+    func returnFavCity(viewContext: NSManagedObjectContext) -> FavouriteCity {
+        let favouriteCity = FavouriteCity(context: viewContext)
+        
+        favouriteCity.cityName = self.todayWeatherDetails.city
+        favouriteCity.timeStamp = self.dt
+        
+        favouriteCity.minTemp = self.todayWeatherDetails.minTemperature
+        favouriteCity.maxTemp = self.todayWeatherDetails.maxTemperature
+        favouriteCity.currentTemp = self.todayWeatherDetails.currentTemperature
+         
+        favouriteCity.itemIdentifier = UUID()
+        
+        return favouriteCity
+    }
+    
+    func addToCoreData(viewContext: NSManagedObjectContext) {
+        let weatherD = self.todayWeatherDetails
+        
+        for forecast in self.forecastData {
+            let cityForecast = CityForecast(context: viewContext)
+            
+            cityForecast.dayOfWeek = forecast.date
+            cityForecast.currentTemperature = forecast.temperature
+            cityForecast.condition = Int16(forecast.weather[0].id)
+
+            cityForecast.cityName = weatherD.city
+            cityForecast.relationship = returnFavCity(viewContext: viewContext)
+            
+            cityForecast.timeStamp = self.dt
+            
+            cityForecast.minTemp = weatherD.minTemperature
+            cityForecast.maxTemp = weatherD.maxTemperature
+            cityForecast.currentTemp = weatherD.currentTemperature
+             
+            cityForecast.itemIdentifier = UUID()
+        }
+        
+        do {
+            try viewContext.save()
+            print("Weather saved!")
+        } catch {
+            print("Whoops, error occurred: \(error.localizedDescription)")
+        }
+    }
+    
     func getCityCurrentWeather() async {
         let endpoint = WeatherEndpoints.getCityCurrent
         
@@ -37,18 +83,14 @@ class WeatherViewModel: NSObject, ObservableObject {
             do {
                 let weather = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: OpenWeather.self)
                 
-                guard let weatherMain = weather.main else {
-                    return
-                }
-                
-                self.todayWeatherDetails = TodaysWeatherDetails(city: weather.name ?? "Land of Ooo",
-                                                          minTemperature: weatherMain.currentTemp,
-                                                          currentTemperature: weatherMain.lowDescription,
-                                                           maxTemperature: weatherMain.highDescription,
-                                                           id: weather.weather?.first?.id ?? 800)
-                // TODO: Properly Unwrap above values?
-                
                 await MainActor.run {
+                    self.todayWeatherDetails = TodaysWeatherDetails(city: weather.name,
+                                                              minTemperature: weather.main.currentTemp,
+                                                              currentTemperature: weather.main.lowDescription,
+                                                               maxTemperature: weather.main.highDescription,
+                                                               id: weather.weather.first?.id ?? 800)
+                    // TODO: Properly Unwrap above values?
+                    
                     print("Current weather: \(self.forecastData)")
                     self.dt = weather.date
                 }

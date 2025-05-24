@@ -9,13 +9,7 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var viewContext
     @ObservedObject var viewModel: ContentViewModel
-    
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
 
     var body: some View {
         VStack(alignment: .center) {
@@ -43,12 +37,6 @@ struct ContentView: View {
                         await getWeatherDetails()
                     }
                 }
-//                .onChange(of: viewModel.viewState) {
-//                    Task {
-//                        await getWeatherDetails()
-//                    }
-//                }
-            // TODO: Why is this requesting multiple times.
         }
     }
     

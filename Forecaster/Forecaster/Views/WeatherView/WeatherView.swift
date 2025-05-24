@@ -7,6 +7,7 @@
 
 import SwiftUICore
 import SwiftUI
+import CoreData
 
 struct WeatherView: View {
     @ScaledMetric(relativeTo: .headline) var dynamicHeaderSize = 65
@@ -14,11 +15,18 @@ struct WeatherView: View {
     @ScaledMetric(relativeTo: .title) var dynamicTitleSize = 29
     @ScaledMetric(relativeTo: .body) var dynamicTextSize = 15
     
+    @EnvironmentObject var manager: DataManager
+    @Environment(\.managedObjectContext) var viewContext
+    @FetchRequest(sortDescriptors: []) private var cityFetchedResults: FetchedResults<FavouriteCity>
+    @FetchRequest(sortDescriptors: []) private var forecastFetchedResults: FetchedResults<CityForecast>
+    
     @ObservedObject var viewModel: WeatherViewModel
     
     @State var isShowing = false
+    @State var isShowingSaveButton = false
     @State var currentWeather = "clear"
     
+    @State private var isRotating = 0.0
     @State private var citySearchActive = false
     @State private var cityText = ""
     
@@ -36,10 +44,9 @@ struct WeatherView: View {
                     createCurrentForecastView()
                 
             ScrollView {
-                    Spacer()
                     createCurrentForecastTableView()
                     createTimeStampUpdate()
-                    if citySearchActive { createAddButton() }
+                    if isShowingSaveButton { createAddButton() }
                 // TODO: Update upon new city request
                 }
                 .scrollContentBackground(.hidden)
@@ -77,21 +84,40 @@ struct WeatherView: View {
                                for: .bottomBar)
             .toolbarBackground(.visible, for: .bottomBar)
         }
-        .searchable(text: $cityText,
-                    isPresented: $citySearchActive,
-                    prompt: "Search for your city")
         .accentColor(.white)
         .background(setupViewTheme().backgroundColor)
-        .onChange(of: cityText) {
-            WeatherLocation.sharedInstance.city = cityText
-            
-            Task {
-                await self.viewModel.getCityWeather()
-            }
-        }
         .onAppear {
             isShowing = true
             citySearchActive = false
+            isShowingSaveButton = false
+            
+            for city in cityFetchedResults {
+                print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
+                print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
+                print("The stored city maxTemP in \(String(describing: city.index)) is \(city.maxTemp)")
+            }
+            
+            for forecast in forecastFetchedResults {
+                print("The stored forecast name in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.cityName)")
+                print("The stored forecast condition in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.condition)")
+                print("The stored forecast currentTemp in \(String(describing: forecast.index)) is \(forecast.currentTemp)")
+                print("The stored forecast maxTemP in \(String(describing: forecast.index)) is \(forecast.dayOfWeek)")
+            }
+        }
+        .searchable(text: $cityText,
+                    isPresented: $citySearchActive,
+                    prompt: "Search for your city")
+        .onSubmit(of: .search) {
+            
+            if !self.cityText.isEmpty {
+                
+                WeatherLocation.sharedInstance.city = cityText
+                isShowingSaveButton = true
+                
+                Task {
+                    await self.viewModel.getCityWeather()
+                }
+            }
         }
     }
     
@@ -135,18 +161,19 @@ struct WeatherView: View {
     
     func createTimeStampUpdate() -> some View {
         HStack() {
-            Text("\(self.viewModel.todayWeatherDetails.city) updated: \(self.viewModel.dt)")
+            Text("'\(self.viewModel.todayWeatherDetails.city)' updated: \(self.viewModel.dt)")
                 .multilineTextAlignment(.trailing)
                 .dynamicTypeSize(.small)
                 .italic()
                 .foregroundStyle(.white)
-                .padding(.leading, 120)
+                .padding(.leading, 100)
         }
+        .padding(.trailing, 35)
     }
     
     func createAddButton() -> some View {
         Button(action: {
-            // Add city to persistence
+            self.viewModel.addToCoreData(viewContext: viewContext)
         }) {
             Text("Add City")
               .frame(maxWidth: 250)
@@ -157,6 +184,35 @@ struct WeatherView: View {
         }
         .shadow(color: .red,
                 radius: 21, y: 9)
+    }
+    
+    func addForecastToCoreDataCity(using city: FavouriteCity) {
+        
+        for forecast in self.viewModel.forecastData {
+            let cityForecast = CityForecast(context: viewContext)
+            
+            cityForecast.dayOfWeek = forecast.date
+            cityForecast.currentTemperature = forecast.temperature
+            cityForecast.condition = Int16(forecast.weather[0].id)
+
+            cityForecast.relationship = city
+        }
+        
+        do {
+            try viewContext.save()
+            print("Weather saved!")
+        } catch let error as NSError {
+            print("🔥 Save failed: \(error.localizedDescription)")
+            
+            if let detailedErrors = error.userInfo["NSDetailedErrors"] as? [NSError] {
+                for detailedError in detailedErrors {
+                    print("🛑 Detailed Error: \(detailedError.localizedDescription)")
+                    print("🔍 Info: \(detailedError.userInfo)")
+                }
+            } else {
+                print("🛑 General Info: \(error.userInfo)")
+            }
+        }
     }
     
     func createCurrentForecastView() -> some View {
@@ -276,7 +332,7 @@ struct WeatherView: View {
                                                                            minTemperature: "15°",
                                                                           currentTemperature: "17°",
                                                                           maxTemperature: "25°",
-                                                                          id: 100),
+                                                                          id: 300),
                                      weatherForcast: [ForecastList(dt: 1748120400, temp: Temp(temp: 18.63),
                                                                    weather: [Weather(id: 205)]),
                                                       ForecastList(dt: 1748206800, temp: Temp(temp: 15.49),
@@ -286,7 +342,7 @@ struct WeatherView: View {
                                                       ForecastList(dt: 1748379600, temp: Temp(temp: 15.56),
                                                                    weather: [Weather(id: 100)]),
                                                       ForecastList(dt: 1748390400, temp: Temp(temp: 15.13),
-                                                                   weather: [Weather(id: 800)])], dt: "Tuesday, May 23"
+                                                                   weather: [Weather(id: 800)])], dt: "Tuesday, May 23 at 4:46 PM"
                                     )
     
      WeatherView(viewModel: viewModel)
