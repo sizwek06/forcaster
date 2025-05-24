@@ -22,7 +22,7 @@ struct WeatherView: View {
     
     @ObservedObject var viewModel: WeatherViewModel
     
-    @State var isShowing = false
+    @State var isWeatherShowing = true
     @State var isShowingSaveButton = false
     @State var currentWeather = "clear"
     
@@ -30,6 +30,10 @@ struct WeatherView: View {
     @State private var citySearchActive = false
     @FocusState private var citySearchFocus: Bool
     @State private var cityText = ""
+    
+    @State private var isFavePopoverPresented: Bool = false
+    @State private var selectedCity: FavouriteCity? = nil
+    @State var cityListHeight: CGFloat = 0
     
     init(viewModel: WeatherViewModel) {
         self.viewModel = viewModel
@@ -57,7 +61,8 @@ struct WeatherView: View {
                 ToolbarItemGroup(placement: .bottomBar) {
                     HStack (spacing: 50) {
                         Button(action: {
-                            // do something
+                            self.isFavePopoverPresented = false
+                            self.isWeatherShowing = true
                         }) {
                             VStack(spacing: 5) {
                                 Image(systemName: getToolBarWeatherIcon())
@@ -68,14 +73,26 @@ struct WeatherView: View {
                         }
                         
                         Button(action: {
-                            // do something
+                            self.isFavePopoverPresented = true
+                            self.isWeatherShowing = false
+                            
+                            print("Menu array has: \(self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))")
+                            
+                            print("Forecast Fetched Results are: \(forecastFetchedResults)")
                         }) {
                             VStack(spacing: 5) {
-                                Image(systemName: isShowing ? "star" : "star.fill")
-                                Text("Faves")
+                                Image(systemName: isFavePopoverPresented ? "star.fill" : "star")
+                                Text("Cities")
                                     .font(.subheadline)
                             }
                             .foregroundStyle(.white)
+                        }
+                        .popover(isPresented: $isFavePopoverPresented) {
+                            
+                            FavouritesListView(selection: $selectedCity,
+                                               cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+                            
+                        .presentationCompactAdaptation(.none)
                         }
                     }
                 }
@@ -88,7 +105,7 @@ struct WeatherView: View {
         .accentColor(.white)
         .background(setupViewTheme().backgroundColor)
         .onAppear {
-            isShowing = true
+            isWeatherShowing = true
             citySearchActive = false
             isShowingSaveButton = false
             citySearchFocus = self.viewModel.forecastData.isEmpty
@@ -299,11 +316,11 @@ struct WeatherView: View {
         
         switch viewModel.todayWeatherDetails.id {
         case 200...799:
-            return self.isShowing ? "cloud.rain.fill" : "cloud.rain"
+            return self.isWeatherShowing ? "cloud.rain.fill" : "cloud.rain"
         case 800...899:
-            return self.isShowing ? "cloud.sun.fill" : "cloud.sun"
+            return self.isWeatherShowing ? "cloud.sun.fill" : "cloud.sun"
         default:
-            return self.isShowing ? "sun.horizon.fill" : "sun.horizon"
+            return self.isWeatherShowing ? "sun.horizon.fill" : "sun.horizon"
         }
     }
     

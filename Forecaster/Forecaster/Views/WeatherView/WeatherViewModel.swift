@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUICore
 import CoreData
+import SwiftUI
 
 class WeatherViewModel: NSObject, ObservableObject {
     
@@ -29,6 +30,12 @@ class WeatherViewModel: NSObject, ObservableObject {
         self.todayWeatherDetails = weatherDetails
         self.forecastData = weatherForcast
         self.dt = dt
+    }
+    
+    func getFavouriteCities(fetchedResults: FetchedResults<FavouriteCity>) -> [FavouriteCity] {
+        
+        return Dictionary(grouping: fetchedResults, by: { $0.cityName})
+            .compactMap { $0.value.first }
     }
     
     func returnFavCity(viewContext: NSManagedObjectContext) -> FavouriteCity {
