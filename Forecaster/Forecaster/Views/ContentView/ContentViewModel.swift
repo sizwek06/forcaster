@@ -156,7 +156,7 @@ class ContentViewModel: NSObject, ObservableObject {
     
     func setupLocationDefaultError() {
         self.errorCode = "Location not found.".uppercased()
-        self.errorDescription = "Rlease review device's location settings and restart app.".uppercased()
+        self.errorDescription = "Please review device's location settings and restart app.".uppercased()
     }
     
     func checkLocationStatus() -> ViewState {
@@ -164,7 +164,7 @@ class ContentViewModel: NSObject, ObservableObject {
         case .authorizedWhenInUse, .authorizedAlways, .authorized:
             return .loading
         default:
-            return .locationUnknown
+            return .loading
         }
     }
     
