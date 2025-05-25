@@ -15,7 +15,7 @@ struct ForecastList: Codable, Identifiable {
     var weather: [Weather]
     
     var temperature: String {
-        return "\(Int(temp.temp))ºC"
+        return "\(Int(temp.temp))º"
     }
     
    
