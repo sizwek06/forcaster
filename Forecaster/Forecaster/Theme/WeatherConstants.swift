@@ -11,20 +11,25 @@ import UIKit
 struct WeatherConstants {
     
     // MARK: ToolBar
-    static let weatherViewTitle = "5-Day Forecast"
+    static let weatherViewTitle = "Forecast"
     static let favouriteCitiesTitle = "Cities"
+    static let mapsTitle = "Maps"
     
     // MARK: WeatherView
     static let currentMinTempTitle = "min"
     static let currentMaxTempTitle = "max"
     static let currentTempTitle = "Current"
     
+    static let loaderText = "Fetching the weather!"
     static let addCityButtonTitle = "Add City".uppercased()
     
     // MARK: FavouritesList
     static let favouritesListViewTitle = "Select your City"
     static let favouritesListSubtitle = "✈️ Available Cities ✈️"
     static let favouritesListEmptyText = "  Tap to Search for new city! \n    "
+    
+    // MARK: MapView
+    static let mapsNavtitle = "Find your city"
     
     // MARK: WeatherView Preview Defaults
     static let previewCity = "Land of Oo"
@@ -61,6 +66,6 @@ struct WeatherConstants {
 
 extension Bundle {
     var buildVersionNumber: String? {
-        return infoDictionary?["CFBundleVersion"] as? String
+        return infoDictionary?["CFBundleShortVersionString"] as? String
     }
 }

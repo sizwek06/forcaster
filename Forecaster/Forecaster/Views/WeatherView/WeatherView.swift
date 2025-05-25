@@ -127,17 +127,16 @@ struct WeatherView: View {
                 self.viewModel.todayWeatherDetails = self.viewModel.todayWeatherDetails
             }
         }
-        .onChange(of: isMapShown) {
-            
-        }
         .tint(Color.white)
+        .navigationDestination(isPresented: $isMapShown) { MapView() }
     }
     
     func printCoreData() {
         for city in cityFetchedResults {
             print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
             print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
-            print("The stored city maxTemP in \(String(describing: city.index)) is \(city.maxTemp)")
+            print("The stored city lon in \(String(describing: city.index)) is \(city.lon)")
+            print("The stored city lat in \(String(describing: city.index)) is \(city.lat)")
         }
         
         for forecast in forecastFetchedResults {
@@ -156,12 +155,16 @@ struct WeatherView: View {
     }
 }
 
+// MARK: Preview Section
 #Preview {
     let viewModel = WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,
                                                                           minTemperature: WeatherConstants.previewCityMinTempTitle,
                                                                           currentTemperature: WeatherConstants.previewCityTempTitle,
                                                                           maxTemperature: WeatherConstants.previewCityMaxTempTitle,
-                                                                          id: 0, dt: 1748206800),
+                                                                          id: 0,
+                                                                          dt: 1748206800,
+                                                                          lat: 18.55,
+                                                                          lon: -33.82),
                                      weatherForcast: WeatherConstants.previewForecast)
     
     WeatherView(viewModel: viewModel)

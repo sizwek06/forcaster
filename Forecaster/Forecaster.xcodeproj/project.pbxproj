@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		280DF3322DE0ED7F00857B31 /* CityForecast+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF32F2DE0ED7F00857B31 /* CityForecast+CoreDataProperties.swift */; };
-		280DF3332DE0ED7F00857B31 /* CityForecast+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF32E2DE0ED7F00857B31 /* CityForecast+CoreDataClass.swift */; };
-		280DF3342DE0ED7F00857B31 /* FavouriteCity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF3312DE0ED7F00857B31 /* FavouriteCity+CoreDataProperties.swift */; };
-		280DF3352DE0ED7F00857B31 /* FavouriteCity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF3302DE0ED7F00857B31 /* FavouriteCity+CoreDataClass.swift */; };
+		280DF3512DE328F800857B31 /* CityForecast+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF34E2DE328F800857B31 /* CityForecast+CoreDataProperties.swift */; };
+		280DF3522DE328F800857B31 /* FavouriteCity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF3502DE328F800857B31 /* FavouriteCity+CoreDataProperties.swift */; };
+		280DF3532DE328F800857B31 /* CityForecast+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF34D2DE328F800857B31 /* CityForecast+CoreDataClass.swift */; };
+		280DF3542DE328F800857B31 /* FavouriteCity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF34F2DE328F800857B31 /* FavouriteCity+CoreDataClass.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,10 +34,10 @@
 		280DF24F2DDEF21900857B31 /* Forecaster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Forecaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		280DF2642DDEF21C00857B31 /* ForecasterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ForecasterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		280DF26E2DDEF21C00857B31 /* ForecasterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ForecasterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		280DF32E2DE0ED7F00857B31 /* CityForecast+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CityForecast+CoreDataClass.swift"; sourceTree = "<group>"; };
-		280DF32F2DE0ED7F00857B31 /* CityForecast+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CityForecast+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		280DF3302DE0ED7F00857B31 /* FavouriteCity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FavouriteCity+CoreDataClass.swift"; sourceTree = "<group>"; };
-		280DF3312DE0ED7F00857B31 /* FavouriteCity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FavouriteCity+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		280DF34D2DE328F800857B31 /* CityForecast+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CityForecast+CoreDataClass.swift"; sourceTree = "<group>"; };
+		280DF34E2DE328F800857B31 /* CityForecast+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CityForecast+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		280DF34F2DE328F800857B31 /* FavouriteCity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FavouriteCity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		280DF3502DE328F800857B31 /* FavouriteCity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FavouriteCity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -99,10 +99,10 @@
 		280DF2462DDEF21900857B31 = {
 			isa = PBXGroup;
 			children = (
-				280DF32E2DE0ED7F00857B31 /* CityForecast+CoreDataClass.swift */,
-				280DF32F2DE0ED7F00857B31 /* CityForecast+CoreDataProperties.swift */,
-				280DF3302DE0ED7F00857B31 /* FavouriteCity+CoreDataClass.swift */,
-				280DF3312DE0ED7F00857B31 /* FavouriteCity+CoreDataProperties.swift */,
+				280DF34D2DE328F800857B31 /* CityForecast+CoreDataClass.swift */,
+				280DF34E2DE328F800857B31 /* CityForecast+CoreDataProperties.swift */,
+				280DF34F2DE328F800857B31 /* FavouriteCity+CoreDataClass.swift */,
+				280DF3502DE328F800857B31 /* FavouriteCity+CoreDataProperties.swift */,
 				280DF2512DDEF21900857B31 /* Forecaster */,
 				280DF2672DDEF21C00857B31 /* ForecasterTests */,
 				280DF2712DDEF21C00857B31 /* ForecasterUITests */,
@@ -264,10 +264,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				280DF3322DE0ED7F00857B31 /* CityForecast+CoreDataProperties.swift in Sources */,
-				280DF3332DE0ED7F00857B31 /* CityForecast+CoreDataClass.swift in Sources */,
-				280DF3342DE0ED7F00857B31 /* FavouriteCity+CoreDataProperties.swift in Sources */,
-				280DF3352DE0ED7F00857B31 /* FavouriteCity+CoreDataClass.swift in Sources */,
+				280DF3512DE328F800857B31 /* CityForecast+CoreDataProperties.swift in Sources */,
+				280DF3522DE328F800857B31 /* FavouriteCity+CoreDataProperties.swift in Sources */,
+				280DF3532DE328F800857B31 /* CityForecast+CoreDataClass.swift in Sources */,
+				280DF3542DE328F800857B31 /* FavouriteCity+CoreDataClass.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -441,7 +441,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.test.Forecaster;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -471,7 +471,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.test.Forecaster;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

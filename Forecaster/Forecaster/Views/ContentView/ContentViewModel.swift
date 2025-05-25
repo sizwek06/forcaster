@@ -34,10 +34,12 @@ class ContentViewModel: NSObject, ObservableObject {
     @Published var forecastData: [ForecastList] = []
     
     public init(apiClient: WeatherApiProtocol = WeatherApiClient(),
-                locationManager: CLLocationManager = CLLocationManager()) {
+                locationManager: CLLocationManager = CLLocationManager(),
+                viewState: ViewState = .loading) {
         
         self.apiClient = apiClient
         self.locationManager = CLLocationManager()
+        self.viewState = viewState
     }
     
     func getCurrentWeather() async {
@@ -52,7 +54,9 @@ class ContentViewModel: NSObject, ObservableObject {
                                                            currentTemperature: weather.main.currentTemp,
                                                            maxTemperature: weather.main.highDescription,
                                                            id: weather.weather.first?.id ?? 800,
-                                                           dt: weather.dt)
+                                                           dt: weather.dt,
+                                                           lat: weather.coord.lat,
+                                                           lon: weather.coord.lon)
                 
                 await MainActor.run {
                     print("Current weather: \(self.forecastData)")
@@ -123,7 +127,9 @@ class ContentViewModel: NSObject, ObservableObject {
                                                            currentTemperature: mainCity.currentTemp,
                                                            maxTemperature: mainCity.maxTemp,
                                                            id: Int(mainCity.cityCondition),
-                                                           dt: Int(mainCity.timeStamp))
+                                                           dt: Int(mainCity.timeStamp),
+                                                           lat: mainCity.lat,
+                                                           lon: mainCity.lon)
                 
                 let predicate = NSPredicate(format: "cityName == %@", mainCity.cityName)
                 let fetchRequest = NSFetchRequest<NSFetchRequestResult>.init(entityName: "CityForecast")
