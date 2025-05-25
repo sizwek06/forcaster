@@ -24,6 +24,7 @@ struct WeatherConstants {
     // MARK: FavouritesList
     static let favouritesListViewTitle = "Select your City"
     static let favouritesListSubtitle = "✈️ Available Cities ✈️"
+    static let favouritesListEmptyText = "  Tap to Search for new city! \n    "
     
     // MARK: WeatherView Preview Defaults
     static let previewCity = "Land of Oo"

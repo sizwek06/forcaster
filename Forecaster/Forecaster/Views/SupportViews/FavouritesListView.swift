@@ -20,40 +20,54 @@ struct FavouritesListView: View {
     var body: some View {
         PopoverContainer {
             VStack(alignment: .center) {
-                Text(WeatherConstants.favouritesListViewTitle)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .padding(.top, 15)
-                    .padding(.bottom, 10)
-                    .padding(.leading, 15)
-                Divider()
-                
-                List {
-                    Section(header:
-                                Text(WeatherConstants.favouritesListSubtitle)
-                                    .font(.title2)
-                                    .fontWeight(.semibold)
-                    ) {
-                        ForEach(cityList) { city in
-                            Text(city.cityName)
-                                .font(.title3)
-                                .onTapGesture {
-                                    let today = TodaysWeatherDetails(city: city.cityName,
-                                                     minTemperature: city.minTemp,
-                                                     currentTemperature: city.currentTemp,
-                                                     maxTemperature: city.maxTemp,
-                                                     id: Int(city.cityCondition),
-                                                     dt: Int(city.timeStamp))
-                                    
-                                    selection = today
-                                    dismiss()
-                                }
+                if cityList.isEmpty {
+                    Text(WeatherConstants.favouritesListEmptyText)
+                        .font(.custom(WeatherConstants.sfProRounded,
+                                      size: 17,
+                                      relativeTo: .headline))
+                        .padding(.top, 15)
+                        .padding(.bottom, 10)
+                        .padding(.leading, 10)
+                        .padding(.trailing, 10)
+                        .onTapGesture {
+                            selection = nil
+                            dismiss()
                         }
-                        .onDelete(perform: deleteTask)
+                } else {
+                    Text(WeatherConstants.favouritesListViewTitle)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .padding(.top, 15)
+                        .padding(.bottom, 10)
+                        .padding(.leading, 10)
+                    Divider()
+                    
+                    List {
+                        Section(header:
+                                    Text(WeatherConstants.favouritesListSubtitle)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        ) {
+                            ForEach(cityList) { city in
+                                Text(city.cityName)
+                                    .font(.title3)
+                                    .onTapGesture {
+                                        let today = TodaysWeatherDetails(city: city.cityName,
+                                                                         minTemperature: city.minTemp,
+                                                                         currentTemperature: city.currentTemp,
+                                                                         maxTemperature: city.maxTemp,
+                                                                         id: Int(city.cityCondition),
+                                                                         dt: Int(city.timeStamp))
+                                        
+                                        selection = today
+                                        dismiss()
+                                    }
+                            }
+                            .onDelete(perform: deleteTask)
+                        }
+                        .listStyle(.insetGrouped)
                     }
                 }
-                .listStyle(.insetGrouped)
-                Spacer()
             }
         }
     }

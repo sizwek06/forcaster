@@ -113,10 +113,17 @@ struct WeatherView: View {
         .onChange(of: selectedCity) {
             isShowingSaveButton = false
             
-            self.viewModel.todayWeatherDetails = selectedCity ?? self.viewModel.todayWeatherDetails
-            
-            self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
-                                              viewContext: self.viewContext)
+            if let selectedCity = selectedCity {
+                self.viewModel.todayWeatherDetails = selectedCity
+                
+                self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
+                                                  viewContext: self.viewContext)
+                
+                printCoreData()
+            } else {
+                citySearchFocus = true
+                self.viewModel.todayWeatherDetails = self.viewModel.todayWeatherDetails
+            }
         }
         .tint(Color.white)
     }
