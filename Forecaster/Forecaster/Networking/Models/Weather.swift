@@ -10,11 +10,13 @@ import SwiftUICore
 
 struct Weather: Codable {
     var id: Int
+    // condition id
 }
 
-struct TodaysWeatherDetails {
+struct TodaysWeatherDetails: Equatable {
     var city, minTemperature, currentTemperature, maxTemperature: String
-    var id: Int
+    var id, dt: Int
+    // view id
 }
 
 struct WeatherViewStyler {

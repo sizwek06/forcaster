@@ -2,17 +2,18 @@
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23507" systemVersion="24E263" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
     <entity name="CityForecast" representedClassName="CityForecast" parentEntity="FavouriteCity" syncable="YES">
         <attribute name="condition" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="currentTemperature" attributeType="String"/>
-        <attribute name="dayOfWeek" attributeType="String"/>
+        <attribute name="currentTemperature" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="dayOfWeek" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <relationship name="relationship" maxCount="1" deletionRule="Nullify" destinationEntity="FavouriteCity" inverseName="forecast" inverseEntity="FavouriteCity"/>
     </entity>
     <entity name="FavouriteCity" representedClassName="FavouriteCity" syncable="YES">
+        <attribute name="cityCondition" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="cityName" attributeType="String"/>
         <attribute name="currentTemp" attributeType="String"/>
         <attribute name="itemIdentifier" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="maxTemp" attributeType="String"/>
         <attribute name="minTemp" attributeType="String"/>
-        <attribute name="timeStamp" attributeType="String"/>
+        <attribute name="timeStamp" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <relationship name="forecast" toMany="YES" deletionRule="Nullify" destinationEntity="CityForecast" inverseName="relationship" inverseEntity="CityForecast"/>
     </entity>
 </model>

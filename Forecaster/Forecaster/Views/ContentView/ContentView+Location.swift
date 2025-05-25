@@ -11,9 +11,10 @@ import CoreLocation
 extension ContentViewModel: CLLocationManagerDelegate {
     
     func requestLocation() {
-        
         self.locationManager.delegate = self
         self.locationManager.requestWhenInUseAuthorization()
+        
+        self.viewState = .loading
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -25,6 +26,8 @@ extension ContentViewModel: CLLocationManagerDelegate {
         switch status {
         case .authorizedAlways, .authorizedWhenInUse:
             self.viewState = .loading
+        case .notDetermined:
+            self.viewState = .locationUnknown
         default:
             provideLocationErrorDetails()
         }
@@ -35,6 +38,8 @@ extension ContentViewModel: CLLocationManagerDelegate {
     }
     
     func provideLocationErrorDetails() {
+        self.viewState = .error
+        
         self.errorCode = "0000"
         self.errorDescription = "Location not found, please review device settings and restart app."
         self.showingError = true
