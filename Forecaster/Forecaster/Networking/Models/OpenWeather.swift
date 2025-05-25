@@ -18,11 +18,6 @@ struct OpenWeather: Codable {
     var timezone, id: Int
     var name: String
     var cod: Int
-    
-    var date: String {
-        let dateValue = dt.dateFromInt
-        return DateManager.day.stringFrom(date: Date()) == DateManager.date.stringFrom(date: dateValue) ? "Today" : "\(DateManager.date.stringFrom(date: dateValue)) at \(DateManager.time.stringFrom(date: dateValue))"
-    }
 }
 
 

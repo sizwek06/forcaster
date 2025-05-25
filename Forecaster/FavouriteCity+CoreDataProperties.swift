@@ -16,13 +16,14 @@ extension FavouriteCity {
         return NSFetchRequest<FavouriteCity>(entityName: "FavouriteCity")
     }
 
-    @NSManaged public var cityName: String?
-    @NSManaged public var itemIdentifier: UUID?
-    @NSManaged public var timeStamp: String?
-    @NSManaged public var minTemp: String?
-    @NSManaged public var maxTemp: String?
-    @NSManaged public var currentTemp: String?
-    @NSManaged public var forecast: NSSet?
+    @NSManaged public var cityName: String
+    @NSManaged public var itemIdentifier: UUID
+    @NSManaged public var timeStamp: Int32
+    @NSManaged public var minTemp: String
+    @NSManaged public var maxTemp: String
+    @NSManaged public var currentTemp: String
+    @NSManaged public var cityCondition: Int16
+    @NSManaged public var forecast: NSSet
 
 }
 

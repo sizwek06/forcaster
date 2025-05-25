@@ -10,7 +10,8 @@ import CoreData
 
 struct ContentView: View {
     @ObservedObject var viewModel: ContentViewModel
-
+    @Environment(\.managedObjectContext) var viewContext
+    
     var body: some View {
         VStack(alignment: .center) {
             getBody()
@@ -24,7 +25,8 @@ struct ContentView: View {
                     }
                 }
                 .sheet(isPresented: self.$viewModel.showingError) {
-                    ErrorView(isPresented: self.$viewModel.showingError, errorTitle: self.viewModel.errorCode,
+                    ErrorView(isPresented: self.$viewModel.showingError,
+                              errorTitle: self.viewModel.errorCode,
                               errorDescription: self.viewModel.errorDescription)
                 }
                 .onDisappear {
@@ -45,10 +47,18 @@ struct ContentView: View {
         
         switch viewModel.viewState {
             
-        case .loading, .locationUnknown:
+        case .loading, .launch:
             LoadingView()
         case .weatherReceived:
-            WeatherView(viewModel: self.setupWeatherViewModel())
+            WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
+        case .locationUnknown:
+            // create weather view via storedData
+            // TODO: Check why the WeatherView flashes on clean install
+            WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
+        case .error:
+            ErrorView(isPresented: self.$viewModel.showingError,
+                      errorTitle: self.viewModel.errorCode,
+                      errorDescription: self.viewModel.errorDescription)
         }
     }
     
@@ -56,28 +66,27 @@ struct ContentView: View {
         self.viewModel.viewState = self.viewModel.checkLocationStatus()
         
         Task {
-            await self.viewModel.getWeather()
+            await self.viewModel.getWeather(viewContext: viewContext)
         }
     }
     
-    func setupWeatherViewModel() -> WeatherViewModel {
+    func setupWeatherWebservicesViewModel() -> WeatherViewModel {
         
-        guard let weatherDetails = self.viewModel.weatherDetails,
-        let dt = self.viewModel.dt else {
+        guard let weatherDetails = self.viewModel.weatherDetails else {
             
-            return WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: "Unknown City",
-                                                                         minTemperature: "0",
-                                                                         currentTemperature: "0",
-                                                                         maxTemperature: "0",
-                                                                         id: 800),
-                                    weatherForcast: self.viewModel.createFiveDayForecast(),
-                                    dt: "Some date, sorry")
+            return WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,
+                                                                         minTemperature: WeatherConstants.previewCityMinTempTitle,
+                                                                         currentTemperature: WeatherConstants.previewCityTempTitle,
+                                                                         maxTemperature: WeatherConstants.previewCityMaxTempTitle,
+                                                                         id: 0,
+                                                                         dt: WeatherConstants.previewTimestamp),
+                                    weatherForcast: WeatherConstants.previewForecast)
+            // TODO: Handle the above as forecastData.isEmpty and focus user onto search bar
         }
         
         return WeatherViewModel(weatherDetails: weatherDetails,
-                                weatherForcast: self.viewModel.createFiveDayForecast(),
-                                dt: dt)
-        }
+                                weatherForcast: self.viewModel.createFiveDayForecast())
+    }
 }
 
 #Preview {
