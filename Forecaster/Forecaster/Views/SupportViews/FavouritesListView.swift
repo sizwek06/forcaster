@@ -57,7 +57,9 @@ struct FavouritesListView: View {
                                                                          currentTemperature: city.currentTemp,
                                                                          maxTemperature: city.maxTemp,
                                                                          id: Int(city.cityCondition),
-                                                                         dt: Int(city.timeStamp))
+                                                                         dt: Int(city.timeStamp),
+                                                                         lat: city.lat,
+                                                                         lon: city.lon)
                                         
                                         selection = today
                                         dismiss()
@@ -81,17 +83,8 @@ struct FavouritesListView: View {
             do {
                 try viewContext.save()
                 print("Weather saved!")
-            } catch let error as NSError {
-                print("🔥 Save failed: \(error.localizedDescription)")
-                
-                if let detailedErrors = error.userInfo["NSDetailedErrors"] as? [NSError] {
-                    for detailedError in detailedErrors {
-                        print("🛑 Detailed Error: \(detailedError.localizedDescription)")
-                        print("🔍 Info: \(detailedError.userInfo)")
-                    }
-                } else {
-                    print("🛑 General Info: \(error.userInfo)")
-                }
+            } catch let error {
+                print("Save failed: \(error.localizedDescription)")
             }
         }
     }
