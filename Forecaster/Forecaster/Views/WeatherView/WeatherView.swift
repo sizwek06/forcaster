@@ -26,7 +26,7 @@ struct WeatherView: View {
     @State var isShowingSaveButton = false
     @State var currentWeather = "clear"
     
-    @State private var isLoading = true
+    @State private var isLoading = false
     @State private var citySearchActive = false
     @FocusState private var citySearchFocus: Bool
     @State private var cityText = ""
@@ -59,27 +59,32 @@ struct WeatherView: View {
                     .background(setupViewTheme().backgroundColor)
                 }
                 
-                if isLoading {
-                    ShortLoaderAlertView()
-                }
+//                if isLoading {
+//                    ShortLoaderAlertView()
+//                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .toolbar {
-                ToolbarItemGroup(placement: .bottomBar) {
-                    createToolBar()
-                        .popover(isPresented: $isFavePopoverPresented) {
-                            
-                            FavouritesListView(selection: $selectedCity,
-                                               cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
-                            
-                            .presentationCompactAdaptation(.none)
-                        }
+            .searchable(text: $cityText,
+                        isPresented: $citySearchActive,
+                        prompt: "")
+            .searchFocused($citySearchFocus)
+            .onSubmit(of: .search) {
+                
+    //            isLoading = true
+                print("isLoading is now - ", isLoading)
+                
+                if !self.cityText.isEmpty {
+                    
+                    WeatherLocation.sharedInstance.city = cityText
+                    
+                    Task {
+                        await self.viewModel.getCityWeather()
+                    }
+    //                updateLoading()
+                    isShowingSaveButton = true
                 }
             }
             .edgesIgnoringSafeArea(.top)
-            .toolbarBackground(setupViewTheme().backgroundColor,
-                               for: .bottomBar)
-            .accentColor(.white)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(setupViewTheme().backgroundColor)
             .onAppear {
                 isWeatherShowing = true
@@ -90,26 +95,6 @@ struct WeatherView: View {
                 
                 printCoreData()
                 updateLoading()
-            }
-            .searchable(text: $cityText,
-                        isPresented: $citySearchActive,
-                        prompt: "")
-            .searchFocused($citySearchFocus)
-            .onSubmit(of: .search) {
-                
-                isLoading = true
-                print("isLoading is now - ", isLoading)
-                
-                if !self.cityText.isEmpty {
-                    
-                    WeatherLocation.sharedInstance.city = cityText
-                    
-                    Task {
-                        await self.viewModel.getCityWeather()
-                    }
-                    updateLoading()
-                    isShowingSaveButton = true
-                }
             }
         }
         .onChange(of: selectedCity) {
@@ -127,8 +112,25 @@ struct WeatherView: View {
                 self.viewModel.todayWeatherDetails = self.viewModel.todayWeatherDetails
             }
         }
+        .toolbar {
+            ToolbarItemGroup(placement: .bottomBar) {
+                createToolBar()
+                    .popover(isPresented: $isFavePopoverPresented) {
+                        
+                        FavouritesListView(selection: $selectedCity,
+                                           cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+                        
+                        .presentationCompactAdaptation(.none)
+                    }
+            }
+        }
         .tint(Color.white)
-        .navigationDestination(isPresented: $isMapShown) { MapView() }
+        //TODO: Review white the accentColor changes back to blue
+        .toolbarBackground(setupViewTheme().backgroundColor,
+                           for: .bottomBar)
+        .navigationDestination(isPresented: $isMapShown) {
+            MapView(cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+        }
     }
     
     func printCoreData() {
