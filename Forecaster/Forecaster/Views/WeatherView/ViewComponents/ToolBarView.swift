@@ -14,8 +14,9 @@ extension WeatherView {
     func createToolBar() -> some View {
         HStack (spacing: 50) {
             Button(action: {
+                self.isMapShown = false
                 self.isFavePopoverPresented = false
-                self.isWeatherShowing = !self.isFavePopoverPresented
+                self.isWeatherShowing = true
             }) {
                 VStack(spacing: 5) {
                     Image(systemName: getToolBarWeatherIcon())
@@ -26,11 +27,25 @@ extension WeatherView {
             }
             
             Button(action: {
+                self.isMapShown = false
                 self.isFavePopoverPresented = true
-                self.isWeatherShowing = !self.isFavePopoverPresented
+                self.isWeatherShowing = false
             }) {
                 VStack(spacing: 5) {
                     Image(systemName: isFavePopoverPresented ? "star.fill" : "star")
+                    Text(WeatherConstants.favouriteCitiesTitle)
+                        .font(.subheadline)
+                }
+                .foregroundStyle(.white)
+            }
+            
+            Button(action: {
+                self.isMapShown = true
+                self.isFavePopoverPresented = false
+                self.isWeatherShowing = false
+            }) {
+                VStack(spacing: 5) {
+                    Image(systemName: isMapShown ? "globe.europe.africa.fill" : "globe.europe.africa")
                     Text(WeatherConstants.favouriteCitiesTitle)
                         .font(.subheadline)
                 }

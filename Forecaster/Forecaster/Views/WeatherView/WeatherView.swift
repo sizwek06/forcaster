@@ -35,6 +35,8 @@ struct WeatherView: View {
     @State private var selectedCity: TodaysWeatherDetails? = nil
     @State var cityListHeight: CGFloat = 0
     
+    @State var isMapShown: Bool = false
+    
     init(viewModel: WeatherViewModel) {
         self.viewModel = viewModel
     }
@@ -124,6 +126,9 @@ struct WeatherView: View {
                 citySearchFocus = true
                 self.viewModel.todayWeatherDetails = self.viewModel.todayWeatherDetails
             }
+        }
+        .onChange(of: isMapShown) {
+            
         }
         .tint(Color.white)
     }
