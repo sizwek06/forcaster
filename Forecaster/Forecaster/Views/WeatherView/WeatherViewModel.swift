@@ -14,7 +14,6 @@ class WeatherViewModel: NSObject, ObservableObject {
     
     @Published var todayWeatherDetails: TodaysWeatherDetails
     @Published var forecastData: [ForecastList] = []
-    @Published var dt: Int
     
     var errorDescription: String?
     var errorCode: String?
@@ -23,15 +22,14 @@ class WeatherViewModel: NSObject, ObservableObject {
     
     init(apiClient: WeatherApiProtocol = WeatherApiClient(),
          weatherDetails: TodaysWeatherDetails,
-         weatherForcast: [ForecastList],
-         dt: Int) {
+         weatherForcast: [ForecastList]) {
         
         self.apiClient = apiClient
         self.todayWeatherDetails = weatherDetails
         self.forecastData = weatherForcast
-        self.dt = dt
     }
     
+    // MARK: - CoreData Functionality
     func getFavCityForecast(favouriteCity: String, viewContext: NSManagedObjectContext) {
         let req: NSFetchRequest<CityForecast> = CityForecast.fetchRequest()
         
@@ -63,7 +61,7 @@ class WeatherViewModel: NSObject, ObservableObject {
         let favouriteCity = FavouriteCity(context: viewContext)
         
         favouriteCity.cityName = self.todayWeatherDetails.city
-        favouriteCity.timeStamp = Int32(self.dt)
+        favouriteCity.timeStamp = Int32(self.todayWeatherDetails.dt)
         
         favouriteCity.minTemp = self.todayWeatherDetails.minTemperature
         favouriteCity.maxTemp = self.todayWeatherDetails.maxTemperature
@@ -91,7 +89,7 @@ class WeatherViewModel: NSObject, ObservableObject {
             cityForecast.cityName = weatherD.city
             cityForecast.relationship = returnFavCity(viewContext: viewContext)
             
-            cityForecast.timeStamp = Int32(self.dt)
+            cityForecast.timeStamp = Int32(self.todayWeatherDetails.dt)
             
             cityForecast.minTemp = weatherD.minTemperature
             cityForecast.maxTemp = weatherD.maxTemperature
@@ -108,6 +106,7 @@ class WeatherViewModel: NSObject, ObservableObject {
         }
     }
     
+    // MARK: - API Requests Functionality
     func getCityCurrentWeather() async {
         let endpoint = WeatherEndpoints.getCityCurrent
         
@@ -120,11 +119,11 @@ class WeatherViewModel: NSObject, ObservableObject {
                                                                     minTemperature: weather.main.lowDescription,
                                                                     currentTemperature: weather.main.currentTemp,
                                                                     maxTemperature: weather.main.highDescription,
-                                                               id: weather.weather.first?.id ?? 800)
+                                                                    id: weather.weather.first?.id ?? 800,
+                                                                    dt: weather.dt)
                     // TODO: Properly Unwrap above values?
                     
                     print("Current weather: \(self.forecastData)")
-                    self.dt = weather.dt
                 }
             } catch let error as WeatherError {
                 await MainActor.run {
@@ -186,39 +185,5 @@ class WeatherViewModel: NSObject, ObservableObject {
                 break
             }
         }
-    }
-    // TODO: Move above and DRY
-    
-    func getForecastCellWeatherIcon(weatherId: Int) -> String {
-        
-        switch weatherId {
-        case 200...799:
-            return "rain"
-        case 800...899:
-            return "partlysunny"
-        default:
-            return "clear"
-        }
-    }
-    
-    func setupViewTheme() -> WeatherViewStyler {
-        switch self.todayWeatherDetails.id {
-            case 200...799:
-                return WeatherViewStyler(backgroundImage: "rainyStackColor",
-                                         mainImage: "sea_rainy",
-                                         currentCondition: "Rainy",
-                                         backgroundColor: Color.rainyStackColor)
-            // TODO: Check why searching for city doesn't change the toolbar colour
-            case 800...899:
-                return WeatherViewStyler(backgroundImage: "cloudyStackColor",
-                                         mainImage: "sea_cloudy",
-                                         currentCondition: "Cloudy",
-                                         backgroundColor: Color.cloudyStackColor)
-        default:
-            return WeatherViewStyler(backgroundImage: "cloudyStackColor",
-                                     mainImage: "sea_sunnypng",
-                                     currentCondition: "Sunny",
-                                     backgroundColor: Color.clearStackColor)
-            }
     }
 }

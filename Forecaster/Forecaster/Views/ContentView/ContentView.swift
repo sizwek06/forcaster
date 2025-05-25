@@ -72,22 +72,20 @@ struct ContentView: View {
     
     func setupWeatherWebservicesViewModel() -> WeatherViewModel {
         
-        guard let weatherDetails = self.viewModel.weatherDetails,
-              let dt = self.viewModel.dt else {
+        guard let weatherDetails = self.viewModel.weatherDetails else {
             
-            return WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: "Unknown City",
-                                                                         minTemperature: "0",
-                                                                         currentTemperature: "0",
-                                                                         maxTemperature: "0",
-                                                                         id: 800),
-                                    weatherForcast: self.viewModel.createFiveDayForecast(),
-                                    dt: Int(Date().timeIntervalSince1970))
+            return WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,
+                                                                         minTemperature: WeatherConstants.previewCityMinTempTitle,
+                                                                         currentTemperature: WeatherConstants.previewCityTempTitle,
+                                                                         maxTemperature: WeatherConstants.previewCityMaxTempTitle,
+                                                                         id: 0,
+                                                                         dt: WeatherConstants.previewTimestamp),
+                                    weatherForcast: WeatherConstants.previewForecast)
             // TODO: Handle the above as forecastData.isEmpty and focus user onto search bar
         }
         
         return WeatherViewModel(weatherDetails: weatherDetails,
-                                weatherForcast: self.viewModel.createFiveDayForecast(),
-                                dt: dt)
+                                weatherForcast: self.viewModel.createFiveDayForecast())
     }
 }
 

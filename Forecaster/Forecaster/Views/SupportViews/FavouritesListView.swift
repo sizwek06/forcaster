@@ -18,17 +18,20 @@ struct FavouritesListView: View {
     var body: some View {
         PopoverContainer {
             VStack(alignment: .center) {
-                Text("Select your City")
+                Text(WeatherConstants.favouritesListViewTitle)
                     .font(.title)
                     .fontWeight(.bold)
-                    .padding(.top, 10)
+                    .padding(.top, 15)
                     .padding(.bottom, 10)
                     .padding(.leading, 15)
                 Divider()
                 
                 List {
-                    Section(header: Text("✈️ Available Cities ✈️")) {
-                        
+                    Section(header:
+                                Text(WeatherConstants.favouritesListSubtitle)
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                    ) {
                         ForEach(cityList) { city in
                             Text(city.cityName)
                                 .font(.title3)
@@ -37,9 +40,9 @@ struct FavouritesListView: View {
                                                      minTemperature: city.minTemp,
                                                      currentTemperature: city.currentTemp,
                                                      maxTemperature: city.maxTemp,
-                                                     id: Int(city.cityCondition))
+                                                     id: Int(city.cityCondition),
+                                                     dt: Int(city.timeStamp))
                                     
-                                    print("Tap Gesture worked: \(today)")
                                     selection = today
                                     dismiss()
                                 }
