@@ -12,18 +12,15 @@ struct WeatherData: Codable {
     var pressure, humidity, seaLevel, grndLevel: Int
     
     var currentTemp: String {
-//        guard let temp = temp else { return "" }
         return "\(Int(temp))º"
     }
     
     var highDescription: String {
-//        guard let tempMax = tempMax else { return "" }
-        return "\(Int(tempMax))ºC"
+        return "\(Int(tempMax))º"
     }
     
     var lowDescription: String {
-//        guard let tempMin = tempMin else { return "" }
-        return "\(Int(tempMin))ºC"
+        return "\(Int(tempMin))º"
     }
 
     enum CodingKeys: String, CodingKey {

@@ -22,13 +22,18 @@ struct WeatherView: View {
     
     @ObservedObject var viewModel: WeatherViewModel
     
-    @State var isShowing = false
+    @State var isWeatherShowing = true
     @State var isShowingSaveButton = false
     @State var currentWeather = "clear"
     
-    @State private var isRotating = 0.0
+    @State private var isLoading = true
     @State private var citySearchActive = false
+    @FocusState private var citySearchFocus: Bool
     @State private var cityText = ""
+    
+    @State var isFavePopoverPresented: Bool = false
+    @State private var selectedCity: TodaysWeatherDetails? = nil
+    @State var cityListHeight: CGFloat = 0
     
     init(viewModel: WeatherViewModel) {
         self.viewModel = viewModel
@@ -36,314 +41,123 @@ struct WeatherView: View {
     
     var body: some View {
         NavigationStack {
-            
-            VStack(spacing: -10) {
-                    // Background header Image
+            ZStack(alignment: .center) {
+                VStack(spacing: -10) {
+                    
                     createCurrentWeatherView()
-                    // Header of current
                     createCurrentForecastView()
-                
-            ScrollView {
-                    createCurrentForecastTableView()
-                    createTimeStampUpdate()
-                    if isShowingSaveButton { createAddButton() }
-                // TODO: Update upon new city request
+                    
+                    ScrollView {
+                        createCurrentForecastTableView()
+                        createTimeStampUpdate()
+                        if isShowingSaveButton { createAddButton() }
+                        // TODO: Update upon new city request
+                    }
+                    .scrollContentBackground(.hidden)
+                    .background(setupViewTheme().backgroundColor)
                 }
-                .scrollContentBackground(.hidden)
-                .background(setupViewTheme().backgroundColor)
+                
+                if isLoading {
+                    ShortLoaderAlertView()
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
-                    HStack (spacing: 50) {
-                        Button(action: {
-                            // do something
-                        }) {
-                            VStack(spacing: 5) {
-                                Image(systemName: getToolBarWeatherIcon())
-                                Text("5-Day Forecast")
-                                    .font(.subheadline)
-                            }
-                            .foregroundStyle(.white)
+                    createToolBar()
+                        .popover(isPresented: $isFavePopoverPresented) {
+                            
+                            FavouritesListView(selection: $selectedCity,
+                                               cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+                            
+                            .presentationCompactAdaptation(.none)
                         }
-                        
-                        Button(action: {
-                            // do something
-                        }) {
-                            VStack(spacing: 5) {
-                                Image(systemName: isShowing ? "star" : "star.fill")
-                                Text("Faves")
-                                    .font(.subheadline)
-                            }
-                            .foregroundStyle(.white)
-                        }
-                    }
                 }
             }
             .edgesIgnoringSafeArea(.top)
             .toolbarBackground(setupViewTheme().backgroundColor,
                                for: .bottomBar)
-            .toolbarBackground(.visible, for: .bottomBar)
+            .accentColor(.white)
+            .background(setupViewTheme().backgroundColor)
+            .onAppear {
+                isWeatherShowing = true
+                citySearchActive = false
+                isShowingSaveButton = false
+                isLoading = true
+                citySearchFocus = self.viewModel.forecastData.isEmpty
+                
+                printCoreData()
+                updateLoading()
+            }
+            .searchable(text: $cityText,
+                        isPresented: $citySearchActive,
+                        prompt: "")
+            .searchFocused($citySearchFocus)
+            .onSubmit(of: .search) {
+                
+                isLoading = true
+                print("isLoading is now - ", isLoading)
+                
+                if !self.cityText.isEmpty {
+                    
+                    WeatherLocation.sharedInstance.city = cityText
+                    
+                    Task {
+                        await self.viewModel.getCityWeather()
+                    }
+                    updateLoading()
+                    isShowingSaveButton = true
+                }
+            }
         }
-        .accentColor(.white)
-        .background(setupViewTheme().backgroundColor)
-        .onAppear {
-            isShowing = true
-            citySearchActive = false
+        .onChange(of: selectedCity) {
             isShowingSaveButton = false
             
-            for city in cityFetchedResults {
-                print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
-                print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
-                print("The stored city maxTemP in \(String(describing: city.index)) is \(city.maxTemp)")
-            }
-            
-            for forecast in forecastFetchedResults {
-                print("The stored forecast name in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.cityName)")
-                print("The stored forecast condition in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.condition)")
-                print("The stored forecast currentTemp in \(String(describing: forecast.index)) is \(forecast.currentTemp)")
-                print("The stored forecast maxTemP in \(String(describing: forecast.index)) is \(forecast.dayOfWeek)")
-            }
-        }
-        .searchable(text: $cityText,
-                    isPresented: $citySearchActive,
-                    prompt: "Search for your city")
-        .onSubmit(of: .search) {
-            
-            if !self.cityText.isEmpty {
+            if let selectedCity = selectedCity {
+                self.viewModel.todayWeatherDetails = selectedCity
                 
-                WeatherLocation.sharedInstance.city = cityText
-                isShowingSaveButton = true
+                self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
+                                                  viewContext: self.viewContext)
                 
-                Task {
-                    await self.viewModel.getCityWeather()
-                }
-            }
-        }
-    }
-    
-    // MARK: - Views
-    
-    func createCurrentWeatherView() -> some View {
-        ZStack {
-            Image(setupViewTheme().mainImage)
-                .resizable()
-                .frame(height: UIScreen.main.bounds.width - 20 / 5)
-                .padding(.leading, -1) // To remove the Orange line next to shoreline (sunny.png)
-                .scaledToFill()
-            VStack {
-                Text(self.viewModel.todayWeatherDetails.currentTemperature)
-                    .font(.custom(WeatherConstants.sfProBold,
-                                  size: dynamicHeaderSize))
-                    .foregroundColor(.white)
-                Text(setupViewTheme().currentCondition.uppercased())
-                    .font(.custom(WeatherConstants.sfProBold,
-                                  size: dynamicSubheaderSize))
-                    .foregroundColor(.white)
-            }
-        }
-    }
-    
-    func currentText(degrees: String, text: String) -> some View {
-        VStack(alignment: .center) {
-            Text(degrees)
-                .font(.custom(WeatherConstants.sfProRegular,
-                              size: dynamicTextSize))
-                .foregroundColor(.white)
-            Text(text)
-                .font(.custom(WeatherConstants.sfProRegular,
-                              size: dynamicTextSize))
-                .foregroundColor(.white)
-        }
-        .padding(.bottom, 10)
-        .padding(.top, 5)
-        .frame(minWidth: 75, alignment: .leading)
-    }
-    
-    func createTimeStampUpdate() -> some View {
-        HStack() {
-            Text("'\(self.viewModel.todayWeatherDetails.city)' updated: \(self.viewModel.dt)")
-                .multilineTextAlignment(.trailing)
-                .dynamicTypeSize(.small)
-                .italic()
-                .foregroundStyle(.white)
-                .padding(.leading, 100)
-        }
-        .padding(.trailing, 35)
-    }
-    
-    func createAddButton() -> some View {
-        Button(action: {
-            self.viewModel.addToCoreData(viewContext: viewContext)
-        }) {
-            Text("Add City")
-              .frame(maxWidth: 250)
-              .frame(height: 50)
-              .foregroundColor(.white)
-              .background(.orange)
-              .cornerRadius(10)
-        }
-        .shadow(color: .red,
-                radius: 21, y: 9)
-    }
-    
-    func addForecastToCoreDataCity(using city: FavouriteCity) {
-        
-        for forecast in self.viewModel.forecastData {
-            let cityForecast = CityForecast(context: viewContext)
-            
-            cityForecast.dayOfWeek = forecast.date
-            cityForecast.currentTemperature = forecast.temperature
-            cityForecast.condition = Int16(forecast.weather[0].id)
-
-            cityForecast.relationship = city
-        }
-        
-        do {
-            try viewContext.save()
-            print("Weather saved!")
-        } catch let error as NSError {
-            print("🔥 Save failed: \(error.localizedDescription)")
-            
-            if let detailedErrors = error.userInfo["NSDetailedErrors"] as? [NSError] {
-                for detailedError in detailedErrors {
-                    print("🛑 Detailed Error: \(detailedError.localizedDescription)")
-                    print("🔍 Info: \(detailedError.userInfo)")
-                }
+                printCoreData()
             } else {
-                print("🛑 General Info: \(error.userInfo)")
+                citySearchFocus = true
+                self.viewModel.todayWeatherDetails = self.viewModel.todayWeatherDetails
             }
         }
+        .tint(Color.white)
     }
     
-    func createCurrentForecastView() -> some View {
-        VStack(spacing: 5) {
-            HStack(spacing: 5) {
-                Spacer()
-                currentText(degrees: self.viewModel.todayWeatherDetails.minTemperature,
-                            text: "min")
-                .padding(.leading, -15)
-                currentText(degrees: self.viewModel.todayWeatherDetails.currentTemperature,
-                            text: "Current")
-                .padding(.leading, 65)
-                currentText(degrees: self.viewModel.todayWeatherDetails.maxTemperature,
-                            text: "max")
-                .padding(.leading, 70)
-            }
-            .background(setupViewTheme().backgroundColor)
-            .frame(width: WeatherConstants.returnDesiredWidth())
-            
-            Rectangle()
-                .foregroundColor(.white)
-                .frame(height: 1)
+    func printCoreData() {
+        for city in cityFetchedResults {
+            print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
+            print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
+            print("The stored city maxTemP in \(String(describing: city.index)) is \(city.maxTemp)")
         }
-    }
-    
-    
-    func createCurrentForecastTableView() -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Spacer()
-            ForEach(self.viewModel.forecastData) { forecast in
-                createForecastCell(day: forecast.date,
-                                   condition: forecast.weather[0].id,
-                                   degrees: forecast.temperature)
-            }
-        }
-        .frame(width: WeatherConstants.returnDesiredWidth())
-        .background(setupViewTheme().backgroundColor)
-    }
-    
-    func createForecastCell(day: String, condition: Int, degrees: String) -> some View {
-        HStack {
-            Text(day)
-                .multilineTextAlignment(.leading)
-                .font(.custom(WeatherConstants.sfProRegular,
-                              size: dynamicTextSize))
-                .foregroundColor(.white)
-                .lineLimit(1)
-                .frame(minWidth: 100, alignment: .leading)
-            Image(self.getForecastCellWeatherIcon(weatherId: condition))
-                .resizable()
-                .frame(width: 30, height: 30)
-                .foregroundColor(.white)
-                .padding(.leading, 55)
-            Text(degrees)
-                .font(.custom(WeatherConstants.sfProRegular,
-                              size: dynamicTextSize))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.leading)
-                .padding(.trailing, 10)
-                .padding(.leading, 100)
-        }
-        .background(setupViewTheme().backgroundColor)
-        .padding(.bottom, 15)
-    }
-    
-    // MARK: - View Styling
-    
-    func getForecastCellWeatherIcon(weatherId: Int) -> String {
         
-        switch weatherId {
-        case 200...799:
-            return "rain"
-        case 800...899:
-            return "partlysunny"
-        default:
-            return "clear"
+        for forecast in forecastFetchedResults {
+            print("The stored forecast name in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.cityName)")
+            print("The stored forecast condition in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.condition)")
+            print("The stored forecast currentTemp in \(String(describing: forecast.index)) is \(forecast.currentTemp)")
+            print("The stored forecast maxTemP in \(String(describing: forecast.index)) is \(forecast.dayOfWeek)")
         }
     }
     
-    func getToolBarWeatherIcon() -> String {
-        
-        switch viewModel.todayWeatherDetails.id {
-        case 200...799:
-            return self.isShowing ? "cloud.rain.fill" : "cloud.rain"
-        case 800...899:
-            return self.isShowing ? "cloud.sun.fill" : "cloud.sun"
-        default:
-            return self.isShowing ? "sun.horizon.fill" : "sun.horizon"
+    func updateLoading() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            isLoading.toggle()
         }
+        // TODO: Implement Delegation like UIKit to handle when this hides/shows
     }
-    
-    func setupViewTheme() -> WeatherViewStyler {
-        switch viewModel.todayWeatherDetails.id {
-            case 200...799:
-            return WeatherViewStyler(backgroundImage: "rainyStackColor",
-                                         mainImage: "sea_rainy",
-                                         currentCondition: "Rainy",
-                                         backgroundColor: Color.rainyStackColor)
-            case 800...899:
-                return WeatherViewStyler(backgroundImage: "cloudyStackColor",
-                                         mainImage: "sea_cloudy",
-                                         currentCondition: "Cloudy",
-                                         backgroundColor: Color.cloudyStackColor)
-        default:
-            return WeatherViewStyler(backgroundImage: "cloudyStackColor",
-                                     mainImage: "sea_sunnypng",
-                                     currentCondition: "Sunny",
-                                     backgroundColor: Color.clearStackColor)
-            }
-        }
-    }
-
+}
 
 #Preview {
+    let viewModel = WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,
+                                                                          minTemperature: WeatherConstants.previewCityMinTempTitle,
+                                                                          currentTemperature: WeatherConstants.previewCityTempTitle,
+                                                                          maxTemperature: WeatherConstants.previewCityMaxTempTitle,
+                                                                          id: 0, dt: 1748206800),
+                                     weatherForcast: WeatherConstants.previewForecast)
     
-    let viewModel = WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: "Land of Oo",
-                                                                           minTemperature: "15°",
-                                                                          currentTemperature: "17°",
-                                                                          maxTemperature: "25°",
-                                                                          id: 300),
-                                     weatherForcast: [ForecastList(dt: 1748120400, temp: Temp(temp: 18.63),
-                                                                   weather: [Weather(id: 205)]),
-                                                      ForecastList(dt: 1748206800, temp: Temp(temp: 15.49),
-                                                                   weather: [Weather(id: 305)]),
-                                                      ForecastList(dt: 1748293200, temp: Temp(temp: 13.28),
-                                                                   weather: [Weather(id: 805)]),
-                                                      ForecastList(dt: 1748379600, temp: Temp(temp: 15.56),
-                                                                   weather: [Weather(id: 100)]),
-                                                      ForecastList(dt: 1748390400, temp: Temp(temp: 15.13),
-                                                                   weather: [Weather(id: 800)])], dt: "Tuesday, May 23 at 4:46 PM"
-                                    )
-    
-     WeatherView(viewModel: viewModel)
+    WeatherView(viewModel: viewModel)
 }

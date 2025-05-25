@@ -8,12 +8,12 @@
 import Foundation
 import SwiftUICore
 import CoreData
+import SwiftUI
 
 class WeatherViewModel: NSObject, ObservableObject {
     
     @Published var todayWeatherDetails: TodaysWeatherDetails
     @Published var forecastData: [ForecastList] = []
-    @Published var dt: String
     
     var errorDescription: String?
     var errorCode: String?
@@ -22,44 +22,96 @@ class WeatherViewModel: NSObject, ObservableObject {
     
     init(apiClient: WeatherApiProtocol = WeatherApiClient(),
          weatherDetails: TodaysWeatherDetails,
-         weatherForcast: [ForecastList],
-         dt: String) {
+         weatherForcast: [ForecastList]) {
         
         self.apiClient = apiClient
         self.todayWeatherDetails = weatherDetails
         self.forecastData = weatherForcast
-        self.dt = dt
+    }
+    
+    // MARK: - CoreData Functionality
+    func deleteExistingCity(favouriteCity: String, viewContext: NSManagedObjectContext) {
+        let req: NSFetchRequest<FavouriteCity> = FavouriteCity.fetchRequest()
+        
+        req.predicate = NSPredicate(format: "cityName == %@", favouriteCity)
+        
+        do {
+            let cities = try viewContext.fetch(req)
+            print("✅ Found \(cities.count) cities")
+            
+            for city in cities {
+                deleteCity(city: city, viewContext: viewContext)
+            }
+        } catch {
+            print("⛔️ Failed to fetch forecasts: \(error.localizedDescription)")
+        }
+    }
+    
+    func getFavCityForecast(favouriteCity: String, viewContext: NSManagedObjectContext) {
+       
+        let req: NSFetchRequest<CityForecast> = CityForecast.fetchRequest()
+        
+        req.predicate = NSPredicate(format: "cityName == %@", favouriteCity)
+        
+        do {
+            let forecasts = try viewContext.fetch(req)
+            print("✅ Found \(forecasts.count) forecasts")
+            
+            self.forecastData.removeAll()
+            
+            for forecast in forecasts {
+                self.forecastData.append(ForecastList(dt: Int(forecast.dayOfWeek),
+                                                      temp: Temp(temp: forecast.currentTemperature),
+                                                      weather: [Weather(id: Int(forecast.condition))]))
+            }
+        } catch {
+            print("⛔️ Failed to fetch forecasts: \(error.localizedDescription)")
+        }
+    }
+    
+    func getFavouriteCities(fetchedResults: FetchedResults<FavouriteCity>) -> [FavouriteCity] {
+        
+        return Dictionary(grouping: fetchedResults, by: { $0.cityName})
+            .compactMap { $0.value.first }
     }
     
     func returnFavCity(viewContext: NSManagedObjectContext) -> FavouriteCity {
         let favouriteCity = FavouriteCity(context: viewContext)
         
         favouriteCity.cityName = self.todayWeatherDetails.city
-        favouriteCity.timeStamp = self.dt
+        favouriteCity.timeStamp = Int32(self.todayWeatherDetails.dt)
         
         favouriteCity.minTemp = self.todayWeatherDetails.minTemperature
         favouriteCity.maxTemp = self.todayWeatherDetails.maxTemperature
         favouriteCity.currentTemp = self.todayWeatherDetails.currentTemperature
-         
+        
+        favouriteCity.cityCondition = Int16(self.todayWeatherDetails.id)
+        print("VM cityCondition \(self.todayWeatherDetails.id)")
+        print("VM Int16 cityCondition \(Int16(self.todayWeatherDetails.id))")
+        print("entity cityCondition \(favouriteCity.cityCondition)")
         favouriteCity.itemIdentifier = UUID()
         
         return favouriteCity
     }
     
     func addToCoreData(viewContext: NSManagedObjectContext) {
+        
+        deleteExistingCity(favouriteCity: self.todayWeatherDetails.city,
+                           viewContext: viewContext)
+        
         let weatherD = self.todayWeatherDetails
         
         for forecast in self.forecastData {
             let cityForecast = CityForecast(context: viewContext)
             
-            cityForecast.dayOfWeek = forecast.date
-            cityForecast.currentTemperature = forecast.temperature
+            cityForecast.dayOfWeek = Int32(forecast.dt)
+            cityForecast.currentTemperature = forecast.temp.temp
             cityForecast.condition = Int16(forecast.weather[0].id)
 
             cityForecast.cityName = weatherD.city
             cityForecast.relationship = returnFavCity(viewContext: viewContext)
             
-            cityForecast.timeStamp = self.dt
+            cityForecast.timeStamp = Int32(self.todayWeatherDetails.dt)
             
             cityForecast.minTemp = weatherD.minTemperature
             cityForecast.maxTemp = weatherD.maxTemperature
@@ -74,9 +126,23 @@ class WeatherViewModel: NSObject, ObservableObject {
         } catch {
             print("Whoops, error occurred: \(error.localizedDescription)")
         }
+        
     }
     
+    func deleteCity(city: FavouriteCity, viewContext: NSManagedObjectContext) {
+        viewContext.delete(city)
+        
+        do {
+            try viewContext.save()
+            print("✅ Delete done")
+        } catch {
+            print("⛔️ Error deleting")
+        }
+    }
+    
+    // MARK: - API Requests Functionality
     func getCityCurrentWeather() async {
+        
         let endpoint = WeatherEndpoints.getCityCurrent
         
         Task {
@@ -85,14 +151,13 @@ class WeatherViewModel: NSObject, ObservableObject {
                 
                 await MainActor.run {
                     self.todayWeatherDetails = TodaysWeatherDetails(city: weather.name,
-                                                              minTemperature: weather.main.currentTemp,
-                                                              currentTemperature: weather.main.lowDescription,
-                                                               maxTemperature: weather.main.highDescription,
-                                                               id: weather.weather.first?.id ?? 800)
-                    // TODO: Properly Unwrap above values?
+                                                                    minTemperature: weather.main.lowDescription,
+                                                                    currentTemperature: weather.main.currentTemp,
+                                                                    maxTemperature: weather.main.highDescription,
+                                                                    id: weather.weather.first?.id ?? 800,
+                                                                    dt: weather.dt)
                     
                     print("Current weather: \(self.forecastData)")
-                    self.dt = weather.date
                 }
             } catch let error as WeatherError {
                 await MainActor.run {
@@ -104,6 +169,7 @@ class WeatherViewModel: NSObject, ObservableObject {
     }
     
     func getCityWeatherForecast() async {
+        
         let endpoint = WeatherEndpoints.getCityForecast
         
         Task {
@@ -135,16 +201,16 @@ class WeatherViewModel: NSObject, ObservableObject {
         var tempArray: [ForecastList] = []
         
         for forecast in self.forecastData {
-            if existingDays.contains(forecast.date) {
+            if existingDays.contains(forecast.dt.dayOfWeekString) {
                 
                 tempArray[tempArray.count - 1] = forecast
                 
-                if let index = tempArray.firstIndex(where: { $0.date == forecast.date }) {
+                if let index = tempArray.firstIndex(where: { $0.dt.dayOfWeekString == forecast.dt.dayOfWeekString }) {
                     tempArray[index] = forecast
                 }
             } else {
                 tempArray.append(forecast)
-                existingDays.insert(forecast.date)
+                existingDays.insert(forecast.dt.dayOfWeekString)
             }
             
             if tempArray.count == 6 {
@@ -154,38 +220,5 @@ class WeatherViewModel: NSObject, ObservableObject {
                 break
             }
         }
-    }
-    // TODO: Move above and DRY
-    
-    func getForecastCellWeatherIcon(weatherId: Int) -> String {
-        
-        switch weatherId {
-        case 200...799:
-            return "rain"
-        case 800...899:
-            return "partlysunny"
-        default:
-            return "clear"
-        }
-    }
-    
-    func setupViewTheme() -> WeatherViewStyler {
-        switch self.todayWeatherDetails.id {
-            case 200...799:
-                return WeatherViewStyler(backgroundImage: "rainyStackColor",
-                                         mainImage: "sea_rainy",
-                                         currentCondition: "Rainy",
-                                         backgroundColor: Color.rainyStackColor)
-            case 800...899:
-                return WeatherViewStyler(backgroundImage: "cloudyStackColor",
-                                         mainImage: "sea_cloudy",
-                                         currentCondition: "Cloudy",
-                                         backgroundColor: Color.cloudyStackColor)
-        default:
-            return WeatherViewStyler(backgroundImage: "cloudyStackColor",
-                                     mainImage: "sea_sunnypng",
-                                     currentCondition: "Sunny",
-                                     backgroundColor: Color.clearStackColor)
-            }
     }
 }
