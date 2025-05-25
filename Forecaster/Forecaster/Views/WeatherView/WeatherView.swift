@@ -26,7 +26,7 @@ struct WeatherView: View {
     @State var isShowingSaveButton = false
     @State var currentWeather = "clear"
     
-    @State private var isRotating = 0.0
+    @State private var isLoading = true
     @State private var citySearchActive = false
     @FocusState private var citySearchFocus: Bool
     @State private var cityText = ""
@@ -41,31 +41,37 @@ struct WeatherView: View {
     
     var body: some View {
         NavigationStack {
-            
-            VStack(spacing: -10) {
-                
-                createCurrentWeatherView()
-                createCurrentForecastView()
-                
-                ScrollView {
-                    createCurrentForecastTableView()
-                    createTimeStampUpdate()
-                    if isShowingSaveButton { createAddButton() }
-                    // TODO: Update upon new city request
+            ZStack(alignment: .center) {
+                VStack(spacing: -10) {
+                    
+                    createCurrentWeatherView()
+                    createCurrentForecastView()
+                    
+                    ScrollView {
+                        createCurrentForecastTableView()
+                        createTimeStampUpdate()
+                        if isShowingSaveButton { createAddButton() }
+                        // TODO: Update upon new city request
+                    }
+                    .scrollContentBackground(.hidden)
+                    .background(setupViewTheme().backgroundColor)
                 }
-                .scrollContentBackground(.hidden)
-                .background(setupViewTheme().backgroundColor)
+                
+                if isLoading {
+                    ShortLoaderAlertView()
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
                     createToolBar()
-                    .popover(isPresented: $isFavePopoverPresented) {
-                        
-                        FavouritesListView(selection: $selectedCity,
-                                           cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
-                        // TODO: ProgressView for loading
-                        .presentationCompactAdaptation(.none)
-                    }
+                        .popover(isPresented: $isFavePopoverPresented) {
+                            
+                            FavouritesListView(selection: $selectedCity,
+                                               cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+                            
+                            .presentationCompactAdaptation(.none)
+                        }
                 }
             }
             .edgesIgnoringSafeArea(.top)
@@ -77,48 +83,66 @@ struct WeatherView: View {
                 isWeatherShowing = true
                 citySearchActive = false
                 isShowingSaveButton = false
+                isLoading = true
                 citySearchFocus = self.viewModel.forecastData.isEmpty
                 
-                for city in cityFetchedResults {
-                    print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
-                    print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
-                    print("The stored city maxTemP in \(String(describing: city.index)) is \(city.maxTemp)")
-                }
-                
-                for forecast in forecastFetchedResults {
-                    print("The stored forecast name in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.cityName)")
-                    print("The stored forecast condition in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.condition)")
-                    print("The stored forecast currentTemp in \(String(describing: forecast.index)) is \(forecast.currentTemp)")
-                    print("The stored forecast maxTemP in \(String(describing: forecast.index)) is \(forecast.dayOfWeek)")
-                }
+                printCoreData()
+                updateLoading()
             }
             .searchable(text: $cityText,
                         isPresented: $citySearchActive,
                         prompt: "")
             .searchFocused($citySearchFocus)
+            .tint(.white)
             .onSubmit(of: .search) {
-                // TODO: ProgressView for loading
+                
+                isLoading = true
+                print("isLoading is now - ", isLoading)
+                
                 if !self.cityText.isEmpty {
                     
                     WeatherLocation.sharedInstance.city = cityText
-                    isShowingSaveButton = true
                     
                     Task {
                         await self.viewModel.getCityWeather()
                     }
+                    updateLoading()
+                    isShowingSaveButton = true
                 }
             }
-            .onChange(of: selectedCity) {
-                self.viewModel.todayWeatherDetails = selectedCity ?? self.viewModel.todayWeatherDetails
-                
-                self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
-                                                  viewContext: self.viewContext)
-            }
+        }
+        .onChange(of: selectedCity) {
+            isShowingSaveButton = false
+            
+            self.viewModel.todayWeatherDetails = selectedCity ?? self.viewModel.todayWeatherDetails
+            
+            self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
+                                              viewContext: self.viewContext)
         }
     }
+    
+    func printCoreData() {
+        for city in cityFetchedResults {
+            print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
+            print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
+            print("The stored city maxTemP in \(String(describing: city.index)) is \(city.maxTemp)")
+        }
+        
+        for forecast in forecastFetchedResults {
+            print("The stored forecast name in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.cityName)")
+            print("The stored forecast condition in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.condition)")
+            print("The stored forecast currentTemp in \(String(describing: forecast.index)) is \(forecast.currentTemp)")
+            print("The stored forecast maxTemP in \(String(describing: forecast.index)) is \(forecast.dayOfWeek)")
+        }
+    }
+    
+    func updateLoading() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            isLoading.toggle()
+        }
+        // TODO: Implement Delegation like UIKit to handle when this hides/shows
+    }
 }
-
-
 
 #Preview {
     let viewModel = WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,

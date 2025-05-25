@@ -22,13 +22,4 @@ extension Int {
         let dateValue = self.dateFromInt
         return DateManager.day.stringFrom(date: Date()) == DateManager.day.stringFrom(date: dateValue) ? "Today" : DateManager.day.stringFrom(date: dateValue)
     }
-    
-    func f () -> UInt64 {
-        UInt64(7)
-    }
-    
-    func convertToUnit16() -> Int16 {
-        let a : Int64 = 48590108397870
-        return Int16(truncatingIfNeeded: a)
-    }
 }

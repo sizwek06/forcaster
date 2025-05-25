@@ -31,6 +31,7 @@ class WeatherViewModel: NSObject, ObservableObject {
     
     // MARK: - CoreData Functionality
     func getFavCityForecast(favouriteCity: String, viewContext: NSManagedObjectContext) {
+       
         let req: NSFetchRequest<CityForecast> = CityForecast.fetchRequest()
         
         req.predicate = NSPredicate(format: "relationship.cityName == %@", favouriteCity)
@@ -77,6 +78,7 @@ class WeatherViewModel: NSObject, ObservableObject {
     }
     
     func addToCoreData(viewContext: NSManagedObjectContext) {
+        
         let weatherD = self.todayWeatherDetails
         
         for forecast in self.forecastData {
@@ -104,10 +106,12 @@ class WeatherViewModel: NSObject, ObservableObject {
         } catch {
             print("Whoops, error occurred: \(error.localizedDescription)")
         }
+        
     }
     
     // MARK: - API Requests Functionality
     func getCityCurrentWeather() async {
+        
         let endpoint = WeatherEndpoints.getCityCurrent
         
         Task {
@@ -121,7 +125,6 @@ class WeatherViewModel: NSObject, ObservableObject {
                                                                     maxTemperature: weather.main.highDescription,
                                                                     id: weather.weather.first?.id ?? 800,
                                                                     dt: weather.dt)
-                    // TODO: Properly Unwrap above values?
                     
                     print("Current weather: \(self.forecastData)")
                 }
@@ -135,6 +138,7 @@ class WeatherViewModel: NSObject, ObservableObject {
     }
     
     func getCityWeatherForecast() async {
+        
         let endpoint = WeatherEndpoints.getCityForecast
         
         Task {
