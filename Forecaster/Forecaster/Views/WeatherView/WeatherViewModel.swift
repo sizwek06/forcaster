@@ -30,11 +30,28 @@ class WeatherViewModel: NSObject, ObservableObject {
     }
     
     // MARK: - CoreData Functionality
+    func deleteExistingCity(favouriteCity: String, viewContext: NSManagedObjectContext) {
+        let req: NSFetchRequest<FavouriteCity> = FavouriteCity.fetchRequest()
+        
+        req.predicate = NSPredicate(format: "cityName == %@", favouriteCity)
+        
+        do {
+            let cities = try viewContext.fetch(req)
+            print("✅ Found \(cities.count) cities")
+            
+            for city in cities {
+                deleteCity(city: city, viewContext: viewContext)
+            }
+        } catch {
+            print("⛔️ Failed to fetch forecasts: \(error.localizedDescription)")
+        }
+    }
+    
     func getFavCityForecast(favouriteCity: String, viewContext: NSManagedObjectContext) {
        
         let req: NSFetchRequest<CityForecast> = CityForecast.fetchRequest()
         
-        req.predicate = NSPredicate(format: "relationship.cityName == %@", favouriteCity)
+        req.predicate = NSPredicate(format: "cityName == %@", favouriteCity)
         
         do {
             let forecasts = try viewContext.fetch(req)
@@ -79,6 +96,9 @@ class WeatherViewModel: NSObject, ObservableObject {
     
     func addToCoreData(viewContext: NSManagedObjectContext) {
         
+        deleteExistingCity(favouriteCity: self.todayWeatherDetails.city,
+                           viewContext: viewContext)
+        
         let weatherD = self.todayWeatherDetails
         
         for forecast in self.forecastData {
@@ -107,6 +127,17 @@ class WeatherViewModel: NSObject, ObservableObject {
             print("Whoops, error occurred: \(error.localizedDescription)")
         }
         
+    }
+    
+    func deleteCity(city: FavouriteCity, viewContext: NSManagedObjectContext) {
+        viewContext.delete(city)
+        
+        do {
+            try viewContext.save()
+            print("✅ Delete done")
+        } catch {
+            print("⛔️ Error deleting")
+        }
     }
     
     // MARK: - API Requests Functionality

@@ -93,7 +93,6 @@ struct WeatherView: View {
                         isPresented: $citySearchActive,
                         prompt: "")
             .searchFocused($citySearchFocus)
-            .tint(.white)
             .onSubmit(of: .search) {
                 
                 isLoading = true
@@ -119,6 +118,7 @@ struct WeatherView: View {
             self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
                                               viewContext: self.viewContext)
         }
+        .tint(Color.white)
     }
     
     func printCoreData() {

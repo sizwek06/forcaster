@@ -7,11 +7,13 @@
 
 import SwiftUICore
 import SwiftUI
+import CoreData
 
 struct FavouritesListView: View {
     
     @Environment(\.dismiss) var dismiss
     @Binding var selection: TodaysWeatherDetails?
+    @Environment(\.managedObjectContext) var viewContext
     
     var cityList: [FavouriteCity]
     
@@ -47,11 +49,64 @@ struct FavouritesListView: View {
                                     dismiss()
                                 }
                         }
+                        .onDelete(perform: deleteTask)
                     }
                 }
                 .listStyle(.insetGrouped)
                 Spacer()
             }
+        }
+    }
+    
+    func deleteTask(at indexSet: IndexSet) {
+        for index in indexSet {
+            let city = cityList[index].cityName
+            
+            deleteExistingCity(favouriteCity: city)
+            
+            do {
+                try viewContext.save()
+                print("Weather saved!")
+            } catch let error as NSError {
+                print("🔥 Save failed: \(error.localizedDescription)")
+                
+                if let detailedErrors = error.userInfo["NSDetailedErrors"] as? [NSError] {
+                    for detailedError in detailedErrors {
+                        print("🛑 Detailed Error: \(detailedError.localizedDescription)")
+                        print("🔍 Info: \(detailedError.userInfo)")
+                    }
+                } else {
+                    print("🛑 General Info: \(error.userInfo)")
+                }
+            }
+        }
+    }
+    
+    func deleteExistingCity(favouriteCity: String) {
+        let req: NSFetchRequest<FavouriteCity> = FavouriteCity.fetchRequest()
+        
+        req.predicate = NSPredicate(format: "cityName == %@", favouriteCity)
+        
+        do {
+            let cities = try viewContext.fetch(req)
+            print("✅ Found \(cities.count) cities")
+            
+            for city in cities {
+                deleteCity(city: city, viewContext: viewContext)
+            }
+        } catch {
+            print("⛔️ Failed to fetch forecasts: \(error.localizedDescription)")
+        }
+    }
+    
+    func deleteCity(city: FavouriteCity, viewContext: NSManagedObjectContext) {
+        viewContext.delete(city)
+        
+        do {
+            try viewContext.save()
+            print("✅ Delete done")
+        } catch {
+            print("⛔️ Error deleting")
         }
     }
 }
