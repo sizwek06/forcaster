@@ -86,6 +86,9 @@ class WeatherViewModel: NSObject, ObservableObject {
         favouriteCity.currentTemp = self.todayWeatherDetails.currentTemperature
         
         favouriteCity.cityCondition = Int16(self.todayWeatherDetails.id)
+        favouriteCity.lat = self.todayWeatherDetails.lat
+        favouriteCity.lon = self.todayWeatherDetails.lon
+        
         print("VM cityCondition \(self.todayWeatherDetails.id)")
         print("VM Int16 cityCondition \(Int16(self.todayWeatherDetails.id))")
         print("entity cityCondition \(favouriteCity.cityCondition)")
@@ -155,7 +158,9 @@ class WeatherViewModel: NSObject, ObservableObject {
                                                                     currentTemperature: weather.main.currentTemp,
                                                                     maxTemperature: weather.main.highDescription,
                                                                     id: weather.weather.first?.id ?? 800,
-                                                                    dt: weather.dt)
+                                                                    dt: weather.dt,
+                                                                    lat: weather.coord.lat,
+                                                                    lon: weather.coord.lon)
                     
                     print("Current weather: \(self.forecastData)")
                 }

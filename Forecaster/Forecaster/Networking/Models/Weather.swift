@@ -16,6 +16,7 @@ struct Weather: Codable {
 struct TodaysWeatherDetails: Equatable {
     var city, minTemperature, currentTemperature, maxTemperature: String
     var id, dt: Int
+    var lat, lon: Double
     // view id
 }
 

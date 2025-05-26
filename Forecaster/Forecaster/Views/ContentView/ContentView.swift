@@ -13,32 +13,34 @@ struct ContentView: View {
     @Environment(\.managedObjectContext) var viewContext
     
     var body: some View {
-        VStack(alignment: .center) {
-            getBody()
-                .onAppear {
-                    self.viewModel.requestLocation()
-                    
-                    if viewModel.viewState == .loading && !viewModel.showingError {
+        NavigationStack {
+            VStack(alignment: .center) {
+                getBody()
+                    .onAppear {
+                        self.viewModel.requestLocation()
+                        
+                        if viewModel.viewState == .loading && !viewModel.showingError {
+                            Task {
+                                await getWeatherDetails()
+                            }
+                        }
+                    }
+                    .sheet(isPresented: self.$viewModel.showingError) {
+                        ErrorView(isPresented: self.$viewModel.showingError,
+                                  errorTitle: self.viewModel.errorCode,
+                                  errorDescription: self.viewModel.errorDescription)
+                    }
+                    .onDisappear {
+                        self.viewModel.showingError = false
+                    }
+                    .onChange(of: viewModel.showingError) {
+                        self.viewModel.requestLocation()
+                        
                         Task {
                             await getWeatherDetails()
                         }
                     }
-                }
-                .sheet(isPresented: self.$viewModel.showingError) {
-                    ErrorView(isPresented: self.$viewModel.showingError,
-                              errorTitle: self.viewModel.errorCode,
-                              errorDescription: self.viewModel.errorDescription)
-                }
-                .onDisappear {
-                    self.viewModel.showingError = false
-                }
-                .onChange(of: viewModel.showingError) {
-                    self.viewModel.requestLocation()
-                    
-                    Task {
-                        await getWeatherDetails()
-                    }
-                }
+            }
         }
     }
     
@@ -79,7 +81,9 @@ struct ContentView: View {
                                                                          currentTemperature: WeatherConstants.previewCityTempTitle,
                                                                          maxTemperature: WeatherConstants.previewCityMaxTempTitle,
                                                                          id: 0,
-                                                                         dt: WeatherConstants.previewTimestamp),
+                                                                         dt: WeatherConstants.previewTimestamp,
+                                                                         lat: 18.55,
+                                                                         lon: -33.82),
                                     weatherForcast: WeatherConstants.previewForecast)
             // TODO: Handle the above as forecastData.isEmpty and focus user onto search bar
         }

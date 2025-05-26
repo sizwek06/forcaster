@@ -17,7 +17,7 @@ struct WeatherView: View {
     
     @EnvironmentObject var manager: DataManager
     @Environment(\.managedObjectContext) var viewContext
-    @FetchRequest(sortDescriptors: []) private var cityFetchedResults: FetchedResults<FavouriteCity>
+    @FetchRequest(sortDescriptors: []) var cityFetchedResults: FetchedResults<FavouriteCity>
     @FetchRequest(sortDescriptors: []) private var forecastFetchedResults: FetchedResults<CityForecast>
     
     @ObservedObject var viewModel: WeatherViewModel
@@ -26,7 +26,7 @@ struct WeatherView: View {
     @State var isShowingSaveButton = false
     @State var currentWeather = "clear"
     
-    @State private var isLoading = true
+    @State private var isLoading = false
     @State private var citySearchActive = false
     @FocusState private var citySearchFocus: Bool
     @State private var cityText = ""
@@ -34,6 +34,8 @@ struct WeatherView: View {
     @State var isFavePopoverPresented: Bool = false
     @State private var selectedCity: TodaysWeatherDetails? = nil
     @State var cityListHeight: CGFloat = 0
+    
+    @State var isMapShown: Bool = false
     
     init(viewModel: WeatherViewModel) {
         self.viewModel = viewModel
@@ -61,34 +63,6 @@ struct WeatherView: View {
                     ShortLoaderAlertView()
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .toolbar {
-                ToolbarItemGroup(placement: .bottomBar) {
-                    createToolBar()
-                        .popover(isPresented: $isFavePopoverPresented) {
-                            
-                            FavouritesListView(selection: $selectedCity,
-                                               cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
-                            
-                            .presentationCompactAdaptation(.none)
-                        }
-                }
-            }
-            .edgesIgnoringSafeArea(.top)
-            .toolbarBackground(setupViewTheme().backgroundColor,
-                               for: .bottomBar)
-            .accentColor(.white)
-            .background(setupViewTheme().backgroundColor)
-            .onAppear {
-                isWeatherShowing = true
-                citySearchActive = false
-                isShowingSaveButton = false
-                isLoading = true
-                citySearchFocus = self.viewModel.forecastData.isEmpty
-                
-                printCoreData()
-                updateLoading()
-            }
             .searchable(text: $cityText,
                         isPresented: $citySearchActive,
                         prompt: "")
@@ -109,6 +83,19 @@ struct WeatherView: View {
                     isShowingSaveButton = true
                 }
             }
+            .edgesIgnoringSafeArea(.top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(setupViewTheme().backgroundColor)
+            .onAppear {
+                isWeatherShowing = true
+                citySearchActive = false
+                isShowingSaveButton = false
+                isLoading = true
+                citySearchFocus = self.viewModel.forecastData.isEmpty
+                
+                printCoreData()
+                updateLoading()
+            }
         }
         .onChange(of: selectedCity) {
             isShowingSaveButton = false
@@ -125,14 +112,34 @@ struct WeatherView: View {
                 self.viewModel.todayWeatherDetails = self.viewModel.todayWeatherDetails
             }
         }
+        .toolbar {
+            ToolbarItemGroup(placement: .bottomBar) {
+                createToolBar()
+                    .popover(isPresented: $isFavePopoverPresented) {
+                        
+                        FavouritesListView(selection: $selectedCity,
+                                           cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+                        
+                        .presentationCompactAdaptation(.sheet)
+                        .presentationDetents([.height(375)])
+                    }
+            }
+        }
         .tint(Color.white)
+                //TODO: Review white the accentColor changes back to blue
+        .toolbarBackground(setupViewTheme().backgroundColor,
+                           for: .bottomBar)
+        .navigationDestination(isPresented: $isMapShown) {
+            MapView(cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+        }
     }
     
     func printCoreData() {
         for city in cityFetchedResults {
             print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
             print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
-            print("The stored city maxTemP in \(String(describing: city.index)) is \(city.maxTemp)")
+            print("The stored city lon in \(String(describing: city.index)) is \(city.lon)")
+            print("The stored city lat in \(String(describing: city.index)) is \(city.lat)")
         }
         
         for forecast in forecastFetchedResults {
@@ -151,12 +158,16 @@ struct WeatherView: View {
     }
 }
 
+// MARK: Preview Section
 #Preview {
     let viewModel = WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,
                                                                           minTemperature: WeatherConstants.previewCityMinTempTitle,
                                                                           currentTemperature: WeatherConstants.previewCityTempTitle,
                                                                           maxTemperature: WeatherConstants.previewCityMaxTempTitle,
-                                                                          id: 0, dt: 1748206800),
+                                                                          id: 0,
+                                                                          dt: 1748206800,
+                                                                          lat: 18.55,
+                                                                          lon: -33.82),
                                      weatherForcast: WeatherConstants.previewForecast)
     
     WeatherView(viewModel: viewModel)

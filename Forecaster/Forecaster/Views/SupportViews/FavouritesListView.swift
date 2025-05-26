@@ -14,41 +14,27 @@ struct FavouritesListView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var selection: TodaysWeatherDetails?
     @Environment(\.managedObjectContext) var viewContext
+    @State private var searchText = ""
+    @FocusState private var citySearchFocus: Bool
     
     var cityList: [FavouriteCity]
     
+    var searchResults: [FavouriteCity] {
+        searchText.isEmpty ? cityList : cityList.filter { $0.cityName.contains(searchText) }
+    }
+    
     var body: some View {
-        PopoverContainer {
+        NavigationStack {
             VStack(alignment: .center) {
-                if cityList.isEmpty {
-                    Text(WeatherConstants.favouritesListEmptyText)
-                        .font(.custom(WeatherConstants.sfProRounded,
-                                      size: 17,
-                                      relativeTo: .headline))
-                        .padding(.top, 15)
-                        .padding(.bottom, 10)
-                        .padding(.leading, 10)
-                        .padding(.trailing, 10)
-                        .onTapGesture {
-                            selection = nil
-                            dismiss()
-                        }
-                } else {
-                    Text(WeatherConstants.favouritesListViewTitle)
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .padding(.top, 15)
-                        .padding(.bottom, 10)
-                        .padding(.leading, 10)
-                    Divider()
-                    
+                
+                PopoverContainer {
                     List {
                         Section(header:
-                                    Text(WeatherConstants.favouritesListSubtitle)
+                                    Text(WeatherConstants.mapsNavListSubtitle)
                             .font(.headline)
-                            .fontWeight(.semibold)
+                            .fontWeight(.regular)
                         ) {
-                            ForEach(cityList) { city in
+                            ForEach(searchResults) { city in
                                 Text(city.cityName)
                                     .font(.title3)
                                     .onTapGesture {
@@ -57,7 +43,9 @@ struct FavouritesListView: View {
                                                                          currentTemperature: city.currentTemp,
                                                                          maxTemperature: city.maxTemp,
                                                                          id: Int(city.cityCondition),
-                                                                         dt: Int(city.timeStamp))
+                                                                         dt: Int(city.timeStamp),
+                                                                         lat: city.lat,
+                                                                         lon: city.lon)
                                         
                                         selection = today
                                         dismiss()
@@ -68,7 +56,14 @@ struct FavouritesListView: View {
                         .listStyle(.insetGrouped)
                     }
                 }
+                .onAppear {
+                    citySearchFocus = true
+                }
             }
+            .searchable(text: $searchText, prompt: WeatherConstants.mapsCitySearchPrompt)
+            .searchFocused($citySearchFocus)
+            .navigationTitle(WeatherConstants.appName)
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
@@ -81,17 +76,8 @@ struct FavouritesListView: View {
             do {
                 try viewContext.save()
                 print("Weather saved!")
-            } catch let error as NSError {
-                print("🔥 Save failed: \(error.localizedDescription)")
-                
-                if let detailedErrors = error.userInfo["NSDetailedErrors"] as? [NSError] {
-                    for detailedError in detailedErrors {
-                        print("🛑 Detailed Error: \(detailedError.localizedDescription)")
-                        print("🔍 Info: \(detailedError.userInfo)")
-                    }
-                } else {
-                    print("🛑 General Info: \(error.userInfo)")
-                }
+            } catch let error {
+                print("Save failed: \(error.localizedDescription)")
             }
         }
     }
@@ -123,4 +109,50 @@ struct FavouritesListView: View {
             print("⛔️ Error deleting")
         }
     }
+}
+
+// MARK: Preview Section
+#Preview("FavouritesList") {
+    @Previewable var selection = TodaysWeatherDetails(city: WeatherConstants.previewCity,
+                                                      minTemperature: WeatherConstants.previewCityMinTempTitle,
+                                                      currentTemperature: WeatherConstants.previewCityTempTitle,
+                                                      maxTemperature: WeatherConstants.previewCityMaxTempTitle,
+                                                      id: 0,
+                                                      dt: 1748206800,
+                                                      lat: 18.55,
+                                                      lon: -33.82)
+    
+    let context = PersistenceController.preview.container.viewContext
+    let cities = makeSampleCities(in: context)
+    
+    let view = FavouritesListView(selection: .constant(selection), cityList: cities)
+        .environment(\.managedObjectContext, context)
+}
+
+private func makeSampleCities(in context: NSManagedObjectContext) -> [FavouriteCity] {
+    let city1 = FavouriteCity(context: context)
+    city1.cityName = "London"
+    city1.currentTemp = "15"
+    city1.itemIdentifier = UUID()
+    city1.maxTemp = "18"
+    city1.minTemp = "10"
+    city1.timeStamp = Int32(Date().timeIntervalSince1970)
+    city1.cityCondition = 801
+    city1.lat = 51.5074
+    city1.lon = -0.1278
+    city1.forecast = nil
+    
+    let city2 = FavouriteCity(context: context)
+    city2.cityName = "New York"
+    city2.currentTemp = "17"
+    city2.itemIdentifier = UUID()
+    city2.maxTemp = "22"
+    city2.minTemp = "12"
+    city2.timeStamp = Int32(Date().timeIntervalSince1970)
+    city2.cityCondition = 500
+    city2.lat = 40.7128
+    city2.lon = -74.0060
+    city2.forecast = nil
+    
+    return [city1, city2]
 }
