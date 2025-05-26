@@ -23,7 +23,7 @@ struct LoadingView: View {
                 .scaleEffect(2)
                 .tint(.red)
                 .padding(.top, 25)
-            Text("Forecaster v\(Bundle.main.buildVersionNumber ?? "1.01.01")")
+            Text("\(WeatherConstants.appName) v\(Bundle.main.buildVersionNumber ?? "1.01.01")")
                 .font(.headline)
                 .padding(.top, 150)
                 .frame(width: UIScreen.main.bounds.width - 20,
