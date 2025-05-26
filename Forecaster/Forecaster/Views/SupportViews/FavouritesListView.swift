@@ -19,6 +19,10 @@ struct FavouritesListView: View {
     
     var cityList: [FavouriteCity]
     
+    var searchResults: [FavouriteCity] {
+        searchText.isEmpty ? cityList : cityList.filter { $0.cityName.contains(searchText) }
+    }
+    
     var body: some View {
         NavigationStack {
             VStack(alignment: .center) {
@@ -30,7 +34,7 @@ struct FavouritesListView: View {
                             .font(.headline)
                             .fontWeight(.regular)
                         ) {
-                            ForEach(cityList) { city in
+                            ForEach(searchResults) { city in
                                 Text(city.cityName)
                                     .font(.title3)
                                     .onTapGesture {

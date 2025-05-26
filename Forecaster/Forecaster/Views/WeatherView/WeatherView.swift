@@ -125,6 +125,8 @@ struct WeatherView: View {
                     }
             }
         }
+        .tint(Color.white)
+                //TODO: Review white the accentColor changes back to blue
         .toolbarBackground(setupViewTheme().backgroundColor,
                            for: .bottomBar)
         .navigationDestination(isPresented: $isMapShown) {
