@@ -33,12 +33,13 @@ extension WeatherView {
                 self.isWeatherShowing = false
             }) {
                 VStack(spacing: 5) {
-                    Image(systemName: isFavePopoverPresented ? "star.fill" : "star")
+                    Image(systemName: self.cityFetchedResults.isEmpty ? "star.slash" : (isFavePopoverPresented ? "star.fill" : "star"))
                     Text(WeatherConstants.favouriteCitiesTitle)
                         .font(.subheadline)
                 }
                 .foregroundStyle(.white)
             }
+            .disabled(self.cityFetchedResults.isEmpty)
             Spacer()
             
             Button(action: {
