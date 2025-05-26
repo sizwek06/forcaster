@@ -108,8 +108,8 @@ class ContentViewModel: NSObject, ObservableObject {
             return
         }
         
-        WeatherLocation.sharedInstance.long = locationManager.coordinate.longitude.description
-        WeatherLocation.sharedInstance.lat = locationManager.coordinate.latitude.description
+        WeatherLocation.sharedInstance.lon = locationManager.coordinate.longitude
+        WeatherLocation.sharedInstance.lat = locationManager.coordinate.latitude
         
         await self.getCurrentWeather()
         await self.getWeatherForecast()

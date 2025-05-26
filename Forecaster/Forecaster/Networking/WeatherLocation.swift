@@ -9,8 +9,8 @@ import Foundation
 
 public class WeatherLocation {
     
-    var lat: String = ""
-    var long: String = ""
+    var lat: Double = 0.0
+    var lon: Double = 0.0
     var city: String = ""
     
     public static let sharedInstance = WeatherLocation()

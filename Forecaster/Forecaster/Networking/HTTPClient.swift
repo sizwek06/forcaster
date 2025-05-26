@@ -82,7 +82,7 @@ enum WeatherEndpoints: EndpointProvider {
             return [URLQueryItem(name: "lat",
                              value: "\(WeatherLocation.sharedInstance.lat)"),
                     URLQueryItem(name: "lon",
-                                 value: "\(WeatherLocation.sharedInstance.long)"),
+                                 value: "\(WeatherLocation.sharedInstance.lon)"),
                     URLQueryItem(name: "units",
                                  value: "metric"),
                     URLQueryItem(name: "appid",
