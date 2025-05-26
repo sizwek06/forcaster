@@ -10,6 +10,8 @@ import UIKit
 
 struct WeatherConstants {
     
+    static let appName = "Forecaster"
+    
     // MARK: ToolBar
     static let weatherViewTitle = "Forecast"
     static let favouriteCitiesTitle = "Cities"
@@ -26,10 +28,12 @@ struct WeatherConstants {
     // MARK: FavouritesList
     static let favouritesListViewTitle = "Select your City"
     static let favouritesListSubtitle = "✈️ Available Cities ✈️"
-    static let favouritesListEmptyText = "  Tap to Search for new city! \n    "
+    static let favouritesListEmptyText = "   Tap to Search for new city! \n        "
     
     // MARK: MapView
     static let mapsNavtitle = "Find your city"
+    static let mapsNavListSubtitle = "Available Cities"
+    static let mapsCitySearchPrompt = "Search for your city"
     
     // MARK: WeatherView Preview Defaults
     static let previewCity = "Land of Oo"
