@@ -14,27 +14,41 @@ struct MapView: View {
     @State private var searchText = ""
     
     @State private var citySearchActive = false
+    @State private var userSearching = false
     @FocusState private var citySearchFocus: Bool
     @State var isFavePopoverPresented: Bool = false
     @State private var selectedCity: TodaysWeatherDetails? = nil
+    
+    @State private var position: MapCameraPosition = .region(
+        MKCoordinateRegion(center: CLLocationCoordinate2D(latitude:  WeatherLocation.sharedInstance.lat,
+                                                          longitude:  WeatherLocation.sharedInstance.lon),
+                           span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1)))
     
     @Environment(\.managedObjectContext) var viewContext
     
     var cityList: [FavouriteCity] = []
     
+    var searchResults: [FavouriteCity] {
+        searchText.isEmpty ? cityList : cityList.filter{ $0.cityName.contains(searchText)}
+    }
+    
     var body: some View {
         NavigationStack {
             VStack {
                 ZStack {
-                    Map(interactionModes: [.rotate, .zoom])
+                    Map(position: $position,
+                        interactionModes: [.rotate, .zoom, .pan])
+                    // TODO: User mode selection?
+                    // .mapStyle(.hybrid(elevation: .realistic))
                 }
                 .toolbar {
-                    ToolbarItem(placement: .automatic) {
-                        Button {
-                            isFavePopoverPresented = true
-                        } label: {
-                            Image(systemName: "star.fill")
-//                                .foregroundStyle(.black)
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button {
+                                isFavePopoverPresented = true
+                            } label: {
+                                Image(systemName: "star.fill")
+                                    .foregroundStyle(.black)
+                            }
                         }
                     }
                 }
@@ -44,26 +58,29 @@ struct MapView: View {
                                        cityList: self.cityList)
                     
                     .presentationCompactAdaptation(.sheet)
+                    .presentationDetents([.height(375)])
                 }
                 .onChange(of: selectedCity) {
-                    citySearchFocus = true
                     searchText = selectedCity?.city ?? ""
+                    
+                    position = getUserPosition(selectedCity: selectedCity)
                 }
-                .searchable(text: $searchText, isPresented: $citySearchActive, prompt: "")
-                .searchFocused($citySearchFocus)
+                .onAppear {
+                    position = getUserPosition()
+                }
                 .navigationTitle(WeatherConstants.mapsNavtitle)
-                .navigationBarTitleDisplayMode(.large)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
             }
             .background(.clear)
         }
-    }
 }
 
 // MARK: Preview Section
 #Preview {
     let context = PersistenceController.preview.container.viewContext
     let cities = makeSampleCities(in: context)
-
+    
     MapView(cityList: cities)
             .environment(\.managedObjectContext, context)
 }
