@@ -17,7 +17,7 @@ struct WeatherView: View {
     
     @EnvironmentObject var manager: DataManager
     @Environment(\.managedObjectContext) var viewContext
-    @FetchRequest(sortDescriptors: []) private var cityFetchedResults: FetchedResults<FavouriteCity>
+    @FetchRequest(sortDescriptors: []) var cityFetchedResults: FetchedResults<FavouriteCity>
     @FetchRequest(sortDescriptors: []) private var forecastFetchedResults: FetchedResults<CityForecast>
     
     @ObservedObject var viewModel: WeatherViewModel
@@ -59,9 +59,9 @@ struct WeatherView: View {
                     .background(setupViewTheme().backgroundColor)
                 }
                 
-//                if isLoading {
-//                    ShortLoaderAlertView()
-//                }
+                if isLoading {
+                    ShortLoaderAlertView()
+                }
             }
             .searchable(text: $cityText,
                         isPresented: $citySearchActive,
@@ -69,7 +69,7 @@ struct WeatherView: View {
             .searchFocused($citySearchFocus)
             .onSubmit(of: .search) {
                 
-    //            isLoading = true
+                isLoading = true
                 print("isLoading is now - ", isLoading)
                 
                 if !self.cityText.isEmpty {
@@ -79,7 +79,7 @@ struct WeatherView: View {
                     Task {
                         await self.viewModel.getCityWeather()
                     }
-    //                updateLoading()
+                    updateLoading()
                     isShowingSaveButton = true
                 }
             }
@@ -120,12 +120,11 @@ struct WeatherView: View {
                         FavouritesListView(selection: $selectedCity,
                                            cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
                         
-                        .presentationCompactAdaptation(.none)
+                        .presentationCompactAdaptation(.sheet)
+                        .presentationDetents([.height(375)])
                     }
             }
         }
-        .tint(Color.white)
-        //TODO: Review white the accentColor changes back to blue
         .toolbarBackground(setupViewTheme().backgroundColor,
                            for: .bottomBar)
         .navigationDestination(isPresented: $isMapShown) {
