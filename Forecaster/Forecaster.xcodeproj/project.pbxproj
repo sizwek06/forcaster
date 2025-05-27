@@ -48,6 +48,17 @@
 			);
 			target = 280DF24E2DDEF21900857B31 /* Forecaster */;
 		};
+		28E471A72DE5EA6500E60214 /* Exceptions for "Forecaster" folder in "ForecasterTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Networking/HTTPClient.swift,
+				Networking/Models/Forecast.swift,
+				Networking/Models/Weather.swift,
+				Networking/Models/WeatherError.swift,
+				Networking/Networking.swift,
+			);
+			target = 280DF2632DDEF21C00857B31 /* ForecasterTests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -55,6 +66,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				280DF2922DDEF71500857B31 /* Exceptions for "Forecaster" folder in "Forecaster" target */,
+				28E471A72DE5EA6500E60214 /* Exceptions for "Forecaster" folder in "ForecasterTests" target */,
 			);
 			path = Forecaster;
 			sourceTree = "<group>";
