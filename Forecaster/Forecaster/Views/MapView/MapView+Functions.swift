@@ -47,24 +47,29 @@ extension MapView {
         
         return cityArray
     }
-}
-
-struct MarkerView: View {
-    let place: MapLocation
     
-    var body: some View {
-        HStack {
-            Image(systemName: place.condition)
-                .foregroundColor(.black)
-                .font(.title)
-                .fontWeight(.bold)
-            Text("\(place.cityName) \n \(place.todayWeather.currentTemperature)")
-                .font(.caption)
+    struct MarkerView: View {
+        let place: MapLocation
+        let places: [CustomPlace]
+        
+        var body: some View {
+            HStack {
+                Image(systemName: place.condition)
+                    .foregroundColor(.black)
+                    .font(.title)
+                    .fontWeight(.bold)
+                Text("\(place.cityName) \n \(place.todayWeather.currentTemperature)")
+                    .font(.caption)
+            }
+            .onTapGesture {
+//                isPlacesPopoverPresented = true
+                // TODO: Add func to show places via mapIcon
+            }
+            .padding(.all, 5)
+            .background(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12.0))
+            .shadow(radius: 8)
         }
-        .padding(.all, 5)
-        .background(.white)
-        .clipShape(RoundedRectangle(cornerRadius: 12.0))
-        .shadow(radius: 8)
     }
 }
 

@@ -17,7 +17,8 @@ struct MapView: View {
     @State private var citySearchActive = false
     @State private var userSearching = false
     @FocusState private var citySearchFocus: Bool
-    @State var isFavePopoverPresented: Bool = false
+    @State var activePopover: ActivePopover?
+    
     @State private var selectedCity: TodaysWeatherDetails? = nil
     var todayWeatherDetails: TodaysWeatherDetails
     
@@ -27,7 +28,7 @@ struct MapView: View {
     var cityArray: [MapLocation] = []
     
     var cityList: [FavouriteCity] = []
-    @State var places: [GMSPlace] = []
+    @State var places: [CustomPlace] = []
     
     var searchResults: [FavouriteCity] {
         searchText.isEmpty ? cityList : cityList.filter{ $0.cityName.contains(searchText)}
@@ -49,14 +50,14 @@ struct MapView: View {
                     Map(coordinateRegion: $position,
                         annotationItems: createLocationsArray(cityList: self.cityList)) { place in
                         MapAnnotation(coordinate: place.coord) {
-                            MarkerView(place: place)
+                            MarkerView(place: place, places: places)
                         }
                     }
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-                            isFavePopoverPresented = true
+                            activePopover = .favourites
                         } label: {
                             Image(systemName: "star.fill")
                                 .foregroundStyle(.black)
@@ -73,19 +74,27 @@ struct MapView: View {
                     }
                 }
             }
-            .popover(isPresented: $isFavePopoverPresented) {
-                
-                FavouritesListView(selection: $selectedCity,
-                                   cityList: self.cityList)
-                
-                .presentationCompactAdaptation(.sheet)
-                .presentationDetents([.height(375)])
-            }
+            .popover(item: $activePopover, content: { popover in
+                switch popover {
+                case .favourites:
+                    FavouritesListView(selection: $selectedCity,
+                                       cityList: self.cityList)
+                    .presentationCompactAdaptation(.sheet)
+                    .presentationDetents([.height(375)])
+                case .places:
+                    PlacesListView(currentCity: selectedCity?.city ?? "Inknown City",
+                                   placesList: places)
+                    .presentationCompactAdaptation(.sheet)
+                    .presentationDetents([.height(375)])
+                }
+            })
             .onChange(of: selectedCity) {
                 if let userCity = selectedCity {
-                    searchText = userCity.city
                     
                     setupPlaces(lat: userCity.lat, lon: userCity.lon)
+                    
+                    searchText = userCity.city
+                    activePopover = .places
                 } else {
                 }
             }
@@ -94,6 +103,18 @@ struct MapView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
         }
         .background(.clear)
+    }
+}
+
+enum ActivePopover: Identifiable {
+    case favourites
+    case places
+
+    var id: String {
+        switch self {
+        case .favourites: return "favourites"
+        case .places: return "places"
+        }
     }
 }
 

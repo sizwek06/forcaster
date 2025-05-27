@@ -8,10 +8,11 @@ import GooglePlaces
 
 extension MapView {
     
-    func setupPlaces(lat: Double, lon: Double) -> [GMSPlace] {
+    func setupPlaces(lat: Double, lon: Double) {
         
         // Array to hold the places in the response
         var placeResults: [GMSPlace] = []
+        var identifiablePlaces: [CustomPlace] = []
         
         // Define the search area as a 500 meter diameter circle in San Francisco, CA.
         let circularLocationRestriction = GMSPlaceCircularLocationOption(CLLocationCoordinate2DMake(lat, lon), 500)
@@ -22,6 +23,7 @@ extension MapView {
         // Create the GMSPlaceSearchNearbyRequest, specifying the search area and GMSPlace fields to return.
         var request = GMSPlaceSearchNearbyRequest(locationRestriction: circularLocationRestriction, placeProperties: placeProperties)
         let includedTypes = ["restaurant", "cafe"]
+        // TODO: Expand/Limit 
         request.includedTypes = includedTypes
         
         let callback: GMSPlaceSearchNearbyResultCallback = { results, error in
@@ -35,10 +37,14 @@ extension MapView {
                 
                 placeResults = results
                 print("The places: \(results)")
+                
             }
         }
 
         GMSPlacesClient.shared().searchNearby(with: request, callback: callback)
-        return placeResults
+        
+        for place in placeResults {
+            places.append(CustomPlace(place: place))
+        }
     }
 }
