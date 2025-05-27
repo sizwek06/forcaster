@@ -58,6 +58,8 @@ class ContentViewModel: NSObject, ObservableObject {
                                                            lat: weather.coord.lat,
                                                            lon: weather.coord.lon)
                 
+                WeatherLocation.sharedInstance.city = weather.name
+                
                 await MainActor.run {
                     print("Current weather: \(self.forecastData)")
                     
@@ -119,7 +121,7 @@ class ContentViewModel: NSObject, ObservableObject {
 //        let managedObjectContext: NSManagedObjectContext
 //        
         if !cityFetchedResults.isEmpty && !forecastFetchedResults.isEmpty {
-            
+            // TODO: move above code
             if let mainCity = cityFetchedResults.first {
                 
                 self.weatherDetails = TodaysWeatherDetails(city: mainCity.cityName,

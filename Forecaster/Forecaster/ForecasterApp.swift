@@ -10,7 +10,8 @@ import SwiftUI
 @main
 struct ForecasterApp: App {
     @StateObject private var manager: DataManager = DataManager()
-    
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var body: some Scene {
         WindowGroup {
             ContentView(viewModel: ContentViewModel())
