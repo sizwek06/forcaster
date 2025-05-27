@@ -8,6 +8,7 @@
 import SwiftUI
 import MapKit
 import CoreData
+import GooglePlaces
 
 struct MapView: View {
     @Environment(\.dismiss) var dismiss
@@ -18,62 +19,82 @@ struct MapView: View {
     @FocusState private var citySearchFocus: Bool
     @State var isFavePopoverPresented: Bool = false
     @State private var selectedCity: TodaysWeatherDetails? = nil
+    var todayWeatherDetails: TodaysWeatherDetails
     
-    @State private var position: MapCameraPosition = .region(
-        MKCoordinateRegion(center: CLLocationCoordinate2D(latitude:  WeatherLocation.sharedInstance.lat,
-                                                          longitude:  WeatherLocation.sharedInstance.lon),
-                           span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1)))
-    
+    @State private var position: MKCoordinateRegion
     @Environment(\.managedObjectContext) var viewContext
     
+    var cityArray: [MapLocation] = []
+    
     var cityList: [FavouriteCity] = []
+    @State var places: [GMSPlace] = []
     
     var searchResults: [FavouriteCity] {
         searchText.isEmpty ? cityList : cityList.filter{ $0.cityName.contains(searchText)}
+    }
+    
+    init(todayWeatherDetails: TodaysWeatherDetails, cityList: [FavouriteCity]) {
+        self.todayWeatherDetails = todayWeatherDetails
+        self.cityList = cityList
+        
+        self.position = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: self.todayWeatherDetails.lat,
+                                                                          longitude:  self.todayWeatherDetails.lon),
+                                           span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1))
     }
     
     var body: some View {
         NavigationStack {
             VStack {
                 ZStack {
-                    Map(position: $position,
-                        interactionModes: [.rotate, .zoom, .pan])
-                    // TODO: User mode selection?
-                    // .mapStyle(.hybrid(elevation: .realistic))
-                }
-                .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button {
-                                isFavePopoverPresented = true
-                            } label: {
-                                Image(systemName: "star.fill")
-                                    .foregroundStyle(.black)
-                            }
+                    Map(coordinateRegion: $position,
+                        annotationItems: createLocationsArray(cityList: self.cityList)) { place in
+                        MapAnnotation(coordinate: place.coord) {
+                            MarkerView(place: place)
                         }
                     }
                 }
-                .popover(isPresented: $isFavePopoverPresented) {
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            isFavePopoverPresented = true
+                        } label: {
+                            Image(systemName: "star.fill")
+                                .foregroundStyle(.black)
+                        }
+                    }
                     
-                    FavouritesListView(selection: $selectedCity,
-                                       cityList: self.cityList)
-                    
-                    .presentationCompactAdaptation(.sheet)
-                    .presentationDetents([.height(375)])
+                    ToolbarItem(placement: .bottomBar) {
+                        Button {
+                            // TODO: onTapGesture go to current location
+                        } label: {
+                            Image(systemName: "mappin")
+                                .foregroundStyle(.black)
+                        }
+                    }
                 }
-                .onChange(of: selectedCity) {
-                    searchText = selectedCity?.city ?? ""
-                    
-                    position = getUserPosition(selectedCity: selectedCity)
-                }
-                .onAppear {
-                    position = getUserPosition()
-                }
-                .navigationTitle(WeatherConstants.mapsNavtitle)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(.hidden, for: .navigationBar)
             }
-            .background(.clear)
+            .popover(isPresented: $isFavePopoverPresented) {
+                
+                FavouritesListView(selection: $selectedCity,
+                                   cityList: self.cityList)
+                
+                .presentationCompactAdaptation(.sheet)
+                .presentationDetents([.height(375)])
+            }
+            .onChange(of: selectedCity) {
+                if let userCity = selectedCity {
+                    searchText = userCity.city
+                    
+                    setupPlaces(lat: userCity.lat, lon: userCity.lon)
+                } else {
+                }
+            }
+            .navigationTitle(WeatherConstants.mapsNavtitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
         }
+        .background(.clear)
+    }
 }
 
 // MARK: Preview Section
@@ -81,34 +102,41 @@ struct MapView: View {
     let context = PersistenceController.preview.container.viewContext
     let cities = makeSampleCities(in: context)
     
-    MapView(cityList: cities)
-            .environment(\.managedObjectContext, context)
+    let today = TodaysWeatherDetails(city: WeatherConstants.previewCity,
+                                     minTemperature: WeatherConstants.previewCityMinTempTitle,
+                                     currentTemperature: WeatherConstants.previewCityTempTitle,
+                                     maxTemperature: WeatherConstants.previewCityMaxTempTitle,
+                                     id: 0,
+                                     dt: 1748206800,
+                                     lat: 18.55,
+                                     lon: -33.82)
+    
+    MapView(todayWeatherDetails: today, cityList: cities)
+        .environment(\.managedObjectContext, context)
 }
 
 private func makeSampleCities(in context: NSManagedObjectContext) -> [FavouriteCity] {
-    let city1 = FavouriteCity(context: context)
-    city1.cityName = "London"
-    city1.currentTemp = "15"
-    city1.itemIdentifier = UUID()
-    city1.maxTemp = "18"
-    city1.minTemp = "10"
-    city1.timeStamp = Int32(Date().timeIntervalSince1970)
-    city1.cityCondition = 801
-    city1.lat = 51.5074
-    city1.lon = -0.1278
-    city1.forecast = nil
-
-    let city2 = FavouriteCity(context: context)
-    city2.cityName = "New York"
-    city2.currentTemp = "17"
-    city2.itemIdentifier = UUID()
-    city2.maxTemp = "22"
-    city2.minTemp = "12"
-    city2.timeStamp = Int32(Date().timeIntervalSince1970)
-    city2.cityCondition = 500 
-    city2.lat = 40.7128
-    city2.lon = -74.0060
-    city2.forecast = nil
-
-    return [city1, city2]
+    let cities: [(name: String, lat: Double, lon: Double, temp: String, condition: Int16)] = [
+        ("Durban", -29.8587, 31.0218, "24", 800),
+        ("Rome", 41.9028, 12.4964, "21", 801),
+        ("Nice", 43.7102, 7.2620, "22", 802),
+        ("Tokyo", 35.6895, 139.6917, "19", 803),
+        ("Toronto", 43.6510, -79.3470, "16", 804),
+        ("Cairo", 30.0444, 31.2357, "28", 800)
+    ]
+    
+    return cities.map { city in
+        let fav = FavouriteCity(context: context)
+        fav.cityName = city.name
+        fav.currentTemp = city.temp
+        fav.itemIdentifier = UUID()
+        fav.maxTemp = String(Int(city.temp)! + 3)
+        fav.minTemp = String(Int(city.temp)! - 3)
+        fav.timeStamp = Int32(Date().timeIntervalSince1970)
+        fav.cityCondition = city.condition
+        fav.lat = city.lat
+        fav.lon = city.lon
+        fav.forecast = nil
+        return fav
+    }
 }
