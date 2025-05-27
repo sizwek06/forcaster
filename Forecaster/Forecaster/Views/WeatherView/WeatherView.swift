@@ -95,7 +95,7 @@ struct WeatherView: View {
                 
                 updateLoading()
                 
-                if let selectedCity = self.viewModel.todayWeatherDetails {
+                if self.viewModel.todayWeatherDetails != nil {
                     
                 } else {
                     self.viewModel.setupCoreDataWeatherView(cityFetchedResults: self.cityFetchedResults,
