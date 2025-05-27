@@ -60,6 +60,7 @@ struct FavouritesListView: View {
                     citySearchFocus = true
                 }
             }
+            .tint(.accentColor)
             .searchable(text: $searchText, prompt: WeatherConstants.mapsCitySearchPrompt)
             .searchFocused($citySearchFocus)
             .navigationTitle(WeatherConstants.appName)

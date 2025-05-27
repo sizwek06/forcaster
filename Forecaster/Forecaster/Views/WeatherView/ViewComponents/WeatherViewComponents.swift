@@ -143,6 +143,7 @@ extension WeatherView {
     func createAddButton() -> some View {
         Button(action: {
             self.viewModel.addToCoreData(viewContext: viewContext)
+            self.citySearchFocus = false
             self.isFavePopoverPresented = true
         }) {
             Text(WeatherConstants.addCityButtonTitle)
