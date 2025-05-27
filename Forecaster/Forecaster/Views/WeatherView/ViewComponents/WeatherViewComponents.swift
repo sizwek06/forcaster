@@ -21,7 +21,7 @@ extension WeatherView {
                 .padding(.leading, -1) // To remove the Orange line next to shoreline (sunny.png)
                 .scaledToFill()
             VStack {
-                Text(self.viewModel.todayWeatherDetails.currentTemperature)
+                Text(self.viewModel.todayWeatherDetails?.currentTemperature ?? "00")
                     .font(.custom(WeatherConstants.sfProBold,
                                   size: dynamicHeaderSize))
                     .foregroundColor(.white)
@@ -63,13 +63,13 @@ extension WeatherView {
         VStack(spacing: 5) {
             HStack(spacing: 5) {
                 Spacer()
-                currentText(degrees: self.viewModel.todayWeatherDetails.minTemperature,
+                currentText(degrees: self.viewModel.todayWeatherDetails?.minTemperature ?? "00",
                             text: WeatherConstants.currentMinTempTitle)
                 .padding(.leading, -15)
-                currentText(degrees: self.viewModel.todayWeatherDetails.currentTemperature,
+                currentText(degrees: self.viewModel.todayWeatherDetails?.currentTemperature ?? "00",
                             text: WeatherConstants.currentTempTitle)
                 .padding(.leading, 65)
-                currentText(degrees: self.viewModel.todayWeatherDetails.maxTemperature,
+                currentText(degrees: self.viewModel.todayWeatherDetails?.maxTemperature ?? "00",
                             text: WeatherConstants.currentMaxTempTitle)
                 .padding(.leading, 70)
             }
@@ -128,7 +128,7 @@ extension WeatherView {
     @ViewBuilder
     func createTimeStampUpdate() -> some View {
         HStack() {
-            Text("'\(self.viewModel.todayWeatherDetails.city)' updated: \(self.viewModel.todayWeatherDetails.dt.updatedWhenString)")
+            Text("'\(self.viewModel.todayWeatherDetails?.city  ?? "Land of Oo")' updated: \(self.viewModel.todayWeatherDetails?.dt.updatedWhenString ?? "")")
                 .multilineTextAlignment(.trailing)
                 .dynamicTypeSize(.small)
                 .italic()

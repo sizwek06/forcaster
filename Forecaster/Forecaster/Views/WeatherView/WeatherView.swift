@@ -94,6 +94,13 @@ struct WeatherView: View {
                 citySearchFocus = self.viewModel.forecastData.isEmpty
                 
                 updateLoading()
+                
+                if let selectedCity = self.viewModel.todayWeatherDetails {
+                    
+                } else {
+                    self.viewModel.setupCoreDataWeatherView(cityFetchedResults: self.cityFetchedResults,
+                                                            viewContext: viewContext)
+                }
             }
         }
         .onChange(of: selectedCity) {
@@ -102,7 +109,7 @@ struct WeatherView: View {
             if let selectedCity = selectedCity {
                 self.viewModel.todayWeatherDetails = selectedCity
                 
-                self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
+                self.viewModel.getFavCityForecast(favouriteCity: selectedCity.city,
                                                   viewContext: self.viewContext)
             } else {
                 citySearchFocus = true
@@ -123,12 +130,14 @@ struct WeatherView: View {
             }
         }
         .tint(Color.white)
-                //TODO: Review white the accentColor changes back to blue
+        //TODO: Review why the accentColor changes back to blue
         .toolbarBackground(setupViewTheme().backgroundColor,
                            for: .bottomBar)
         .navigationDestination(isPresented: $isMapShown) {
-            MapView(todayWeatherDetails: self.viewModel.todayWeatherDetails,
-                    cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+            if let selectedCity = self.viewModel.todayWeatherDetails {
+                MapView(todayWeatherDetails: selectedCity,
+                        cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+            }
         }
     }
     
