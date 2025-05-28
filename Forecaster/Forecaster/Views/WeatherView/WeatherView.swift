@@ -28,7 +28,7 @@ struct WeatherView: View {
     
     @State private var isLoading = false
     @State private var citySearchActive = false
-    @FocusState private var citySearchFocus: Bool
+    @FocusState var citySearchFocus: Bool
     @State private var cityText = ""
     
     @State var isFavePopoverPresented: Bool = false
@@ -93,8 +93,14 @@ struct WeatherView: View {
                 isLoading = true
                 citySearchFocus = self.viewModel.forecastData.isEmpty
                 
-                printCoreData()
                 updateLoading()
+                
+                if self.viewModel.todayWeatherDetails != nil {
+                    
+                } else {
+                    self.viewModel.setupCoreDataWeatherView(cityFetchedResults: self.cityFetchedResults,
+                                                            viewContext: viewContext)
+                }
             }
         }
         .onChange(of: selectedCity) {
@@ -103,10 +109,8 @@ struct WeatherView: View {
             if let selectedCity = selectedCity {
                 self.viewModel.todayWeatherDetails = selectedCity
                 
-                self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
+                self.viewModel.getFavCityForecast(favouriteCity: selectedCity.city,
                                                   viewContext: self.viewContext)
-                
-                printCoreData()
             } else {
                 citySearchFocus = true
                 self.viewModel.todayWeatherDetails = self.viewModel.todayWeatherDetails
@@ -126,27 +130,14 @@ struct WeatherView: View {
             }
         }
         .tint(Color.white)
-                //TODO: Review white the accentColor changes back to blue
+        //TODO: Review why the accentColor changes back to blue
         .toolbarBackground(setupViewTheme().backgroundColor,
                            for: .bottomBar)
         .navigationDestination(isPresented: $isMapShown) {
-            MapView(cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
-        }
-    }
-    
-    func printCoreData() {
-        for city in cityFetchedResults {
-            print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
-            print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
-            print("The stored city lon in \(String(describing: city.index)) is \(city.lon)")
-            print("The stored city lat in \(String(describing: city.index)) is \(city.lat)")
-        }
-        
-        for forecast in forecastFetchedResults {
-            print("The stored forecast name in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.cityName)")
-            print("The stored forecast condition in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.condition)")
-            print("The stored forecast currentTemp in \(String(describing: forecast.index)) is \(forecast.currentTemp)")
-            print("The stored forecast maxTemP in \(String(describing: forecast.index)) is \(forecast.dayOfWeek)")
+            if let selectedCity = self.viewModel.todayWeatherDetails {
+                MapView(todayWeatherDetails: selectedCity,
+                        cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+            }
         }
     }
     

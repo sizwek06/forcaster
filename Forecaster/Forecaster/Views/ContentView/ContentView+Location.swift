@@ -13,8 +13,6 @@ extension ContentViewModel: CLLocationManagerDelegate {
     func requestLocation() {
         self.locationManager.delegate = self
         self.locationManager.requestWhenInUseAuthorization()
-        
-        self.viewState = .loading
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -23,6 +21,8 @@ extension ContentViewModel: CLLocationManagerDelegate {
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        self.showingError = false
+        
         switch status {
         case .authorizedAlways, .authorizedWhenInUse:
             self.viewState = .loading
@@ -35,13 +35,14 @@ extension ContentViewModel: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         self.viewState = .loading
+        self.showingError = false
     }
     
     func provideLocationErrorDetails() {
         self.viewState = .error
         
         self.errorCode = "0000"
-        self.errorDescription = "Location not found, please review device settings and restart app."
+        self.errorDescription = "Location not found, please review device settings and restart app OR Dismiss this to proceed offline."
         self.showingError = true
     }
 }

@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 import CoreLocation
-import CoreData
 
 class ContentViewModel: NSObject, ObservableObject {
     
@@ -22,13 +21,12 @@ class ContentViewModel: NSObject, ObservableObject {
     var weatherViewModel: WeatherViewModel?
     var weatherDetails: TodaysWeatherDetails?
     
-    @FetchRequest(sortDescriptors: []) private var cityFetchedResults: FetchedResults<FavouriteCity>
     @FetchRequest(sortDescriptors: []) private var forecastFetchedResults: FetchedResults<CityForecast>
     
     var errorDescription: String?
     var errorCode: String?
     
-    let locationManager: CLLocationManager!
+    var locationManager: CLLocationManager!
     let apiClient: WeatherApiProtocol!
     
     @Published var forecastData: [ForecastList] = []
@@ -43,12 +41,12 @@ class ContentViewModel: NSObject, ObservableObject {
     }
     
     func getCurrentWeather() async {
-        let endpoint = WeatherEndpoints.getCurrent
+    let endpoint = WeatherEndpoints.getCurrent
+
+    do {
+        let weather = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: OpenWeather.self)
         
-        Task {
-            do {
-                let weather = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: OpenWeather.self)
-        
+            await MainActor.run {
                 self.weatherDetails = TodaysWeatherDetails(city: weather.name,
                                                            minTemperature: weather.main.lowDescription,
                                                            currentTemperature: weather.main.currentTemp,
@@ -58,18 +56,23 @@ class ContentViewModel: NSObject, ObservableObject {
                                                            lat: weather.coord.lat,
                                                            lon: weather.coord.lon)
                 
-                await MainActor.run {
-                    print("Current weather: \(self.forecastData)")
-                    
-                    self.viewState = .loading
-                }
-            } catch let error as WeatherError {
-                await MainActor.run {
-                    self.showingError = true
-                    self.errorDescription = error.errorDescription
-                    
-                    self.viewState = .error
-                }
+                self.viewState = .loading
+                self.showingError = false
+            }
+        } catch let error as WeatherError {
+            await MainActor.run {
+                self.showingError = true
+                self.errorDescription = error.errorDescription
+                self.errorCode = String(error.errorCode)
+                
+                self.viewState = .error
+            }
+        } catch {
+            await MainActor.run {
+                self.showingError = true
+                self.errorDescription = "Something went wrong"
+                self.errorCode = "0"
+                self.viewState = .error
             }
         }
     }
@@ -77,34 +80,39 @@ class ContentViewModel: NSObject, ObservableObject {
     func getWeatherForecast() async {
         let endpoint = WeatherEndpoints.getForecast
         
-        Task {
-            do {
-                let forecast = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: Forecast.self)
+        do {
+            let forecast = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: Forecast.self)
+            
+            await MainActor.run {
+                self.forecastData = forecast.list
                 
-                await MainActor.run {
-                    
-                    self.forecastData = forecast.list
-                    print("Current Array: \(self.forecastData)")
-                    
-                    self.viewState = .weatherReceived
-                }
-            } catch let error as WeatherError {
-                await MainActor.run {
-                    self.showingError = true
-                    self.errorDescription = error.errorDescription
-                    
-                    self.viewState = .error
-                }
+                self.viewState = .weatherReceived
+                self.showingError = false
+            }
+        } catch let error as WeatherError {
+            await MainActor.run {
+                self.showingError = true
+                self.errorDescription = error.errorDescription
+                self.errorCode = String(error.errorCode)
+                
+                self.viewState = .error
+            }
+        } catch {
+            await MainActor.run {
+                self.showingError = true
+                self.errorDescription = "Something went wrong"
+                self.errorCode = "0"
+                self.viewState = .error
             }
         }
     }
     
-    func getWeather(viewContext: NSManagedObjectContext) async {
+    func getWeather() async {
         
         guard let locationManager = locationManager.location else {
-            self.setupLocationDefaultError()
-            setupCoreDataWeatherView(viewContext: viewContext)
-            // failing that take the user to WeatherView but focus on searchBar?
+            self.viewState = .weatherReceived
+            self.showingError = false
+            
             return
         }
         
@@ -115,53 +123,11 @@ class ContentViewModel: NSObject, ObservableObject {
         await self.getWeatherForecast()
     }
     
-    func setupCoreDataWeatherView(viewContext: NSManagedObjectContext) {
-//        let managedObjectContext: NSManagedObjectContext
-//        
-        if !cityFetchedResults.isEmpty && !forecastFetchedResults.isEmpty {
-            
-            if let mainCity = cityFetchedResults.first {
-                
-                self.weatherDetails = TodaysWeatherDetails(city: mainCity.cityName,
-                                                           minTemperature: mainCity.minTemp,
-                                                           currentTemperature: mainCity.currentTemp,
-                                                           maxTemperature: mainCity.maxTemp,
-                                                           id: Int(mainCity.cityCondition),
-                                                           dt: Int(mainCity.timeStamp),
-                                                           lat: mainCity.lat,
-                                                           lon: mainCity.lon)
-                
-                let predicate = NSPredicate(format: "cityName == %@", mainCity.cityName)
-                let fetchRequest = NSFetchRequest<NSFetchRequestResult>.init(entityName: "CityForecast")
-                
-                fetchRequest.predicate = predicate
-                //fetchRequest.sortDescriptors = [] //optionally you can specify the order in which entities should ordered after fetch finishes
-                
-                do {
-                    let forecastResult = try viewContext.execute(fetchRequest)
-                    
-                    if let forecastResultArray = Array(arrayLiteral: forecastResult) as? [CityForecast] {
-                        for forecast in forecastResultArray {
-                            self.forecastData.append(ForecastList(dt: Int(forecast.dayOfWeek),
-                                                                  temp: Temp(temp: forecast.currentTemperature),
-                                                                  weather: [Weather(id: Int(forecast.condition))]))
-                        }
-                    }
-                } catch {
-                    print("Whoops, error occurred fetching forecast: \(error.localizedDescription)")
-                }
-                
-            } else {
-                
-            }
-        }
-        
-        self.viewState = .weatherReceived
-    }
-    
     func setupLocationDefaultError() {
         self.errorCode = "Location not found.".uppercased()
         self.errorDescription = "Please review device's location settings and restart app.".uppercased()
+        
+        viewState = .error
     }
     
     func checkLocationStatus() -> ViewState {
