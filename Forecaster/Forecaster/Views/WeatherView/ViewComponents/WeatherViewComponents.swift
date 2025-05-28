@@ -30,14 +30,6 @@ extension WeatherView {
                                   size: dynamicSubheaderSize))
                     .foregroundColor(.white)
             }
-            
-            Image(systemName: "arrow.clockwise.circle")
-                .resizable()
-                .frame(width: 35, height: 35)
-                .padding(.leading, 290)
-                .padding(.bottom, 300)
-                .foregroundStyle(.white)
-            // TODO: Use this to refresh weather info from API using q=cityName
         }
     }
     

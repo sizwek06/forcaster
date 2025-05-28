@@ -34,27 +34,31 @@ class WeatherViewModel: NSObject, ObservableObject {
         
         let endpoint = WeatherEndpoints.getCityCurrent
         
-        Task {
-            do {
-                let weather = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: OpenWeather.self)
+        do {
+            let weather = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: OpenWeather.self)
+            
+            await MainActor.run {
+                self.todayWeatherDetails = TodaysWeatherDetails(city: weather.name,
+                                                                minTemperature: weather.main.lowDescription,
+                                                                currentTemperature: weather.main.currentTemp,
+                                                                maxTemperature: weather.main.highDescription,
+                                                                id: weather.weather.first?.id ?? 800,
+                                                                dt: weather.dt,
+                                                                lat: weather.coord.lat,
+                                                                lon: weather.coord.lon)
                 
-                await MainActor.run {
-                    self.todayWeatherDetails = TodaysWeatherDetails(city: weather.name,
-                                                                    minTemperature: weather.main.lowDescription,
-                                                                    currentTemperature: weather.main.currentTemp,
-                                                                    maxTemperature: weather.main.highDescription,
-                                                                    id: weather.weather.first?.id ?? 800,
-                                                                    dt: weather.dt,
-                                                                    lat: weather.coord.lat,
-                                                                    lon: weather.coord.lon)
-                    
-                    print("Current weather: \(self.forecastData)")
-                }
-            } catch let error as WeatherError {
-                await MainActor.run {
-                    // TODO: Handling Error? Alert?
-                    self.errorDescription = error.errorDescription
-                }
+                print("Current weather: \(self.forecastData)")
+            }
+        } catch let error as WeatherError {
+            await MainActor.run {
+                // TODO: Handling Error? Alert?
+                self.errorDescription = error.errorDescription
+                self.errorCode = String(error.errorCode)
+            }
+        } catch {
+            await MainActor.run {
+                self.errorDescription = "Something went wrong"
+                self.errorCode = "0"
             }
         }
     }
@@ -63,21 +67,25 @@ class WeatherViewModel: NSObject, ObservableObject {
         
         let endpoint = WeatherEndpoints.getCityForecast
         
-        Task {
-            do {
-                let forecast = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: Forecast.self)
+        do {
+            let forecast = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: Forecast.self)
+            
+            await MainActor.run {
                 
-                await MainActor.run {
-                    
-                    self.forecastData = forecast.list
-                    print("Current Array: \(self.forecastData)")
-                    self.createFiveDayForecast()
-                }
-            } catch let error as WeatherError {
-                await MainActor.run {
-                    // TODO: Handling Error? Alert?
-                    self.errorDescription = error.errorDescription
-                }
+                self.forecastData = forecast.list
+                print("Current Array: \(self.forecastData)")
+                self.createFiveDayForecast()
+            }
+        } catch let error as WeatherError {
+            await MainActor.run {
+                // TODO: Handling Error? Alert?
+                self.errorDescription = error.errorDescription
+                self.errorCode = String(error.errorCode)
+            }
+        } catch {
+            await MainActor.run {
+                self.errorDescription = "Something went wrong"
+                self.errorCode = "0"
             }
         }
     }

@@ -26,7 +26,7 @@ class ContentViewModel: NSObject, ObservableObject {
     var errorDescription: String?
     var errorCode: String?
     
-    let locationManager: CLLocationManager!
+    var locationManager: CLLocationManager!
     let apiClient: WeatherApiProtocol!
     
     @Published var forecastData: [ForecastList] = []
@@ -41,12 +41,12 @@ class ContentViewModel: NSObject, ObservableObject {
     }
     
     func getCurrentWeather() async {
-        let endpoint = WeatherEndpoints.getCurrent
+    let endpoint = WeatherEndpoints.getCurrent
+
+    do {
+        let weather = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: OpenWeather.self)
         
-        Task {
-            do {
-                let weather = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: OpenWeather.self)
-        
+            await MainActor.run {
                 self.weatherDetails = TodaysWeatherDetails(city: weather.name,
                                                            minTemperature: weather.main.lowDescription,
                                                            currentTemperature: weather.main.currentTemp,
@@ -56,19 +56,23 @@ class ContentViewModel: NSObject, ObservableObject {
                                                            lat: weather.coord.lat,
                                                            lon: weather.coord.lon)
                 
-                await MainActor.run {
-                    print("Current weather: \(self.forecastData)")
-                    
-                    self.viewState = .loading
-                    self.showingError = false
-                }
-            } catch let error as WeatherError {
-                await MainActor.run {
-                    self.showingError = true
-                    self.errorDescription = error.errorDescription
-                    
-                    self.viewState = .error
-                }
+                self.viewState = .loading
+                self.showingError = false
+            }
+        } catch let error as WeatherError {
+            await MainActor.run {
+                self.showingError = true
+                self.errorDescription = error.errorDescription
+                self.errorCode = String(error.errorCode)
+                
+                self.viewState = .error
+            }
+        } catch {
+            await MainActor.run {
+                self.showingError = true
+                self.errorDescription = "Something went wrong"
+                self.errorCode = "0"
+                self.viewState = .error
             }
         }
     }
@@ -76,25 +80,29 @@ class ContentViewModel: NSObject, ObservableObject {
     func getWeatherForecast() async {
         let endpoint = WeatherEndpoints.getForecast
         
-        Task {
-            do {
-                let forecast = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: Forecast.self)
+        do {
+            let forecast = try await apiClient.asyncRequest(endpoint: endpoint, responseModel: Forecast.self)
+            
+            await MainActor.run {
+                self.forecastData = forecast.list
                 
-                await MainActor.run {
-                    
-                    self.forecastData = forecast.list
-                    print("Current Array: \(self.forecastData)")
-                    
-                    self.viewState = .weatherReceived
-                    self.showingError = false
-                }
-            } catch let error as WeatherError {
-                await MainActor.run {
-                    self.showingError = true
-                    self.errorDescription = error.errorDescription
-                    
-                    self.viewState = .error
-                }
+                self.viewState = .weatherReceived
+                self.showingError = false
+            }
+        } catch let error as WeatherError {
+            await MainActor.run {
+                self.showingError = true
+                self.errorDescription = error.errorDescription
+                self.errorCode = String(error.errorCode)
+                
+                self.viewState = .error
+            }
+        } catch {
+            await MainActor.run {
+                self.showingError = true
+                self.errorDescription = "Something went wrong"
+                self.errorCode = "0"
+                self.viewState = .error
             }
         }
     }
