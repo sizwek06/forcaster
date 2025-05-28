@@ -32,13 +32,7 @@ struct ContentView: View {
                     }
                     .onDisappear {
                         self.viewModel.showingError = false
-                    }
-                    .onChange(of: viewModel.showingError) {
-                        self.viewModel.requestLocation()
-                        
-                        Task {
-                            await getWeatherDetails()
-                        }
+                        self.viewModel.viewState = .weatherReceived
                     }
             }
         }
@@ -51,9 +45,7 @@ struct ContentView: View {
             
         case .loading, .launch:
             LoadingView()
-        case .weatherReceived:
-            WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
-        case .locationUnknown:
+        case .weatherReceived, .locationUnknown:
             // create weather view via storedData
             // TODO: Check why the WeatherView flashes on clean install
             WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
@@ -61,6 +53,13 @@ struct ContentView: View {
             ErrorView(isPresented: self.$viewModel.showingError,
                       errorTitle: self.viewModel.errorCode,
                       errorDescription: self.viewModel.errorDescription)
+            .onDisappear {
+                self.viewModel.requestLocation()
+                
+                Task {
+                    await getWeatherDetails()
+                }
+            }
         }
     }
     
@@ -68,12 +67,11 @@ struct ContentView: View {
         self.viewModel.viewState = self.viewModel.checkLocationStatus()
         
         Task {
-            await self.viewModel.getWeather(viewContext: viewContext)
+            await self.viewModel.getWeather()
         }
     }
     
     func setupWeatherWebservicesViewModel() -> WeatherViewModel {
-        
         guard let weatherDetails = self.viewModel.weatherDetails else {
             
             return WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,

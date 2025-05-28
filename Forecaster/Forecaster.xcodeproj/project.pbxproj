@@ -11,6 +11,8 @@
 		280DF3522DE328F800857B31 /* FavouriteCity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF3502DE328F800857B31 /* FavouriteCity+CoreDataProperties.swift */; };
 		280DF3532DE328F800857B31 /* CityForecast+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF34D2DE328F800857B31 /* CityForecast+CoreDataClass.swift */; };
 		280DF3542DE328F800857B31 /* FavouriteCity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF34F2DE328F800857B31 /* FavouriteCity+CoreDataClass.swift */; };
+		28E471B92DE6D64F00E60214 /* CityForecast+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF34D2DE328F800857B31 /* CityForecast+CoreDataClass.swift */; };
+		28E471BB2DE6D66B00E60214 /* FavouriteCity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280DF34F2DE328F800857B31 /* FavouriteCity+CoreDataClass.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +50,27 @@
 			);
 			target = 280DF24E2DDEF21900857B31 /* Forecaster */;
 		};
+		28E471A72DE5EA6500E60214 /* Exceptions for "Forecaster" folder in "ForecasterTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Extensions/IntExtenstion.swift,
+				Networking/HTTPClient.swift,
+				Networking/Models/City.swift,
+				Networking/Models/DateManager.swift,
+				Networking/Models/Forecast.swift,
+				Networking/Models/ForecastList.swift,
+				Networking/Models/OpenWeather.swift,
+				Networking/Models/Weather.swift,
+				Networking/Models/WeatherData.swift,
+				Networking/Models/WeatherError.swift,
+				Networking/Networking.swift,
+				Networking/WeatherLocation.swift,
+				Theme/WeatherConstants.swift,
+				Views/ContentView/ContentViewModel.swift,
+				Views/WeatherView/ViewModel/WeatherViewModel.swift,
+			);
+			target = 280DF2632DDEF21C00857B31 /* ForecasterTests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -55,6 +78,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				280DF2922DDEF71500857B31 /* Exceptions for "Forecaster" folder in "Forecaster" target */,
+				28E471A72DE5EA6500E60214 /* Exceptions for "Forecaster" folder in "ForecasterTests" target */,
 			);
 			path = Forecaster;
 			sourceTree = "<group>";
@@ -275,6 +299,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				28E471BB2DE6D66B00E60214 /* FavouriteCity+CoreDataClass.swift in Sources */,
+				28E471B92DE6D64F00E60214 /* CityForecast+CoreDataClass.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

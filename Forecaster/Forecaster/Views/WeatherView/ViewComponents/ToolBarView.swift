@@ -48,12 +48,14 @@ extension WeatherView {
                 self.isWeatherShowing = false
             }) {
                 VStack(spacing: 5) {
-                    Image(systemName: isMapShown ? "globe.europe.africa.fill" : "globe.europe.africa")
+                    Image(systemName: WeatherLocation.sharedInstance.lon == 0.0 ? "circle.badge.questionmark.fill" : (isMapShown ? "globe.europe.africa.fill" : "globe.europe.africa"))
                     Text(WeatherConstants.mapsTitle)
                         .font(.subheadline)
                 }
+                .disabled(WeatherLocation.sharedInstance.lon == 0.0)
                 .foregroundStyle(.white)
             }
+            // Stop user from going to mapView while online
         }
     }
 }

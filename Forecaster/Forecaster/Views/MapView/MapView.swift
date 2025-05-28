@@ -19,10 +19,8 @@ struct MapView: View {
     @State var isFavePopoverPresented: Bool = false
     @State private var selectedCity: TodaysWeatherDetails? = nil
     
-    @State private var position: MapCameraPosition = .region(
-        MKCoordinateRegion(center: CLLocationCoordinate2D(latitude:  WeatherLocation.sharedInstance.lat,
-                                                          longitude:  WeatherLocation.sharedInstance.lon),
-                           span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1)))
+    @State private var position: MKCoordinateRegion
+    var todayWeatherDetails: TodaysWeatherDetails
     
     @Environment(\.managedObjectContext) var viewContext
     
@@ -32,23 +30,33 @@ struct MapView: View {
         searchText.isEmpty ? cityList : cityList.filter{ $0.cityName.contains(searchText)}
     }
     
+    init(todayWeatherDetails: TodaysWeatherDetails, cityList: [FavouriteCity]) {
+            self.todayWeatherDetails = todayWeatherDetails
+            self.cityList = cityList
+            
+            self.position = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: self.todayWeatherDetails.lat,
+                                                                              longitude:  self.todayWeatherDetails.lon),
+                                               span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1))
+    }
+    
     var body: some View {
         NavigationStack {
             VStack {
                 ZStack {
-                    Map(position: $position,
-                        interactionModes: [.rotate, .zoom, .pan])
-                    // TODO: User mode selection?
-                    // .mapStyle(.hybrid(elevation: .realistic))
+                    Map(coordinateRegion: $position,
+                        annotationItems: createLocationsArray(cityList: self.cityList)) { place in
+                        MapAnnotation(coordinate: place.coord) {
+                            MarkerView(place: place)
+                        }
+                    }
                 }
                 .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button {
-                                isFavePopoverPresented = true
-                            } label: {
-                                Image(systemName: "star.fill")
-                                    .foregroundStyle(.black)
-                            }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            isFavePopoverPresented = true
+                        } label: {
+                            Image(systemName: "star.fill")
+                                .foregroundStyle(.black)
                         }
                     }
                 }
@@ -68,12 +76,13 @@ struct MapView: View {
                 .onAppear {
                     position = getUserPosition()
                 }
-                .navigationTitle(WeatherConstants.mapsNavtitle)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(.hidden, for: .navigationBar)
             }
+            .navigationTitle(WeatherConstants.mapsNavtitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .background(.clear)
         }
+    }
 }
 
 // MARK: Preview Section
@@ -81,7 +90,16 @@ struct MapView: View {
     let context = PersistenceController.preview.container.viewContext
     let cities = makeSampleCities(in: context)
     
-    MapView(cityList: cities)
+    let today = TodaysWeatherDetails(city: WeatherConstants.previewCity,
+                                         minTemperature: WeatherConstants.previewCityMinTempTitle,
+                                         currentTemperature: WeatherConstants.previewCityTempTitle,
+                                         maxTemperature: WeatherConstants.previewCityMaxTempTitle,
+                                         id: 0,
+                                         dt: 1748206800,
+                                         lat: 18.55,
+                                         lon: -33.82)
+    
+    MapView(todayWeatherDetails: today, cityList: cities)
             .environment(\.managedObjectContext, context)
 }
 
