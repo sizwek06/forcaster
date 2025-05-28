@@ -52,10 +52,10 @@ final class ForecasterTests: XCTestCase {
             
             XCTAssertEqual(result.cod, "200")
             XCTAssertEqual(result.message, 0)
-            XCTAssertEqual(result.cnt, 1)
+            XCTAssertEqual(result.cnt, 40)
             
             XCTAssertEqual(result.list[0].dt, 1748422800)
-            XCTAssertEqual(result.list[0].temp.temp, 19.08)
+            XCTAssertEqual(result.list[0].temp.temp, 22.08)
             XCTAssertEqual(result.list[0].weather[0].id, 800)
 
         } catch {
