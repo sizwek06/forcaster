@@ -13,32 +13,28 @@ struct ContentView: View {
     @Environment(\.managedObjectContext) var viewContext
     
     var body: some View {
-        VStack(alignment: .center) {
-            getBody()
-                .onAppear {
-                    self.viewModel.requestLocation()
-                    
-                    if viewModel.viewState == .loading && !viewModel.showingError {
-                        Task {
-                            await getWeatherDetails()
+        NavigationStack {
+            VStack(alignment: .center) {
+                getBody()
+                    .onAppear {
+                        self.viewModel.requestLocation()
+                        
+                        if viewModel.viewState == .loading && !viewModel.showingError {
+                            Task {
+                                await getWeatherDetails()
+                            }
                         }
                     }
-                }
-                .sheet(isPresented: self.$viewModel.showingError) {
-                    ErrorView(isPresented: self.$viewModel.showingError,
-                              errorTitle: self.viewModel.errorCode,
-                              errorDescription: self.viewModel.errorDescription)
-                }
-                .onDisappear {
-                    self.viewModel.showingError = false
-                }
-                .onChange(of: viewModel.showingError) {
-                    self.viewModel.requestLocation()
-                    
-                    Task {
-                        await getWeatherDetails()
+                    .sheet(isPresented: self.$viewModel.showingError) {
+                        ErrorView(isPresented: self.$viewModel.showingError,
+                                  errorTitle: self.viewModel.errorCode,
+                                  errorDescription: self.viewModel.errorDescription)
                     }
-                }
+                    .onDisappear {
+                        self.viewModel.showingError = false
+                        self.viewModel.viewState = .weatherReceived
+                    }
+            }
         }
     }
     
@@ -49,9 +45,7 @@ struct ContentView: View {
             
         case .loading, .launch:
             LoadingView()
-        case .weatherReceived:
-            WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
-        case .locationUnknown:
+        case .weatherReceived, .locationUnknown:
             // create weather view via storedData
             // TODO: Check why the WeatherView flashes on clean install
             WeatherView(viewModel: self.setupWeatherWebservicesViewModel())
@@ -59,6 +53,13 @@ struct ContentView: View {
             ErrorView(isPresented: self.$viewModel.showingError,
                       errorTitle: self.viewModel.errorCode,
                       errorDescription: self.viewModel.errorDescription)
+            .onDisappear {
+                self.viewModel.requestLocation()
+                
+                Task {
+                    await getWeatherDetails()
+                }
+            }
         }
     }
     
@@ -66,12 +67,11 @@ struct ContentView: View {
         self.viewModel.viewState = self.viewModel.checkLocationStatus()
         
         Task {
-            await self.viewModel.getWeather(viewContext: viewContext)
+            await self.viewModel.getWeather()
         }
     }
     
     func setupWeatherWebservicesViewModel() -> WeatherViewModel {
-        
         guard let weatherDetails = self.viewModel.weatherDetails else {
             
             return WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,
@@ -79,7 +79,9 @@ struct ContentView: View {
                                                                          currentTemperature: WeatherConstants.previewCityTempTitle,
                                                                          maxTemperature: WeatherConstants.previewCityMaxTempTitle,
                                                                          id: 0,
-                                                                         dt: WeatherConstants.previewTimestamp),
+                                                                         dt: WeatherConstants.previewTimestamp,
+                                                                         lat: 18.55,
+                                                                         lon: -33.82),
                                     weatherForcast: WeatherConstants.previewForecast)
             // TODO: Handle the above as forecastData.isEmpty and focus user onto search bar
         }

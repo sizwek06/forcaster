@@ -17,7 +17,7 @@ struct WeatherView: View {
     
     @EnvironmentObject var manager: DataManager
     @Environment(\.managedObjectContext) var viewContext
-    @FetchRequest(sortDescriptors: []) private var cityFetchedResults: FetchedResults<FavouriteCity>
+    @FetchRequest(sortDescriptors: []) var cityFetchedResults: FetchedResults<FavouriteCity>
     @FetchRequest(sortDescriptors: []) private var forecastFetchedResults: FetchedResults<CityForecast>
     
     @ObservedObject var viewModel: WeatherViewModel
@@ -26,14 +26,16 @@ struct WeatherView: View {
     @State var isShowingSaveButton = false
     @State var currentWeather = "clear"
     
-    @State private var isLoading = true
+    @State private var isLoading = false
     @State private var citySearchActive = false
-    @FocusState private var citySearchFocus: Bool
+    @FocusState var citySearchFocus: Bool
     @State private var cityText = ""
     
     @State var isFavePopoverPresented: Bool = false
     @State private var selectedCity: TodaysWeatherDetails? = nil
     @State var cityListHeight: CGFloat = 0
+    
+    @State var isMapShown: Bool = false
     
     init(viewModel: WeatherViewModel) {
         self.viewModel = viewModel
@@ -61,34 +63,6 @@ struct WeatherView: View {
                     ShortLoaderAlertView()
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .toolbar {
-                ToolbarItemGroup(placement: .bottomBar) {
-                    createToolBar()
-                        .popover(isPresented: $isFavePopoverPresented) {
-                            
-                            FavouritesListView(selection: $selectedCity,
-                                               cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
-                            
-                            .presentationCompactAdaptation(.none)
-                        }
-                }
-            }
-            .edgesIgnoringSafeArea(.top)
-            .toolbarBackground(setupViewTheme().backgroundColor,
-                               for: .bottomBar)
-            .accentColor(.white)
-            .background(setupViewTheme().backgroundColor)
-            .onAppear {
-                isWeatherShowing = true
-                citySearchActive = false
-                isShowingSaveButton = false
-                isLoading = true
-                citySearchFocus = self.viewModel.forecastData.isEmpty
-                
-                printCoreData()
-                updateLoading()
-            }
             .searchable(text: $cityText,
                         isPresented: $citySearchActive,
                         prompt: "")
@@ -109,6 +83,25 @@ struct WeatherView: View {
                     isShowingSaveButton = true
                 }
             }
+            .edgesIgnoringSafeArea(.top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(setupViewTheme().backgroundColor)
+            .onAppear {
+                isWeatherShowing = true
+                citySearchActive = false
+                isShowingSaveButton = false
+                isLoading = true
+                citySearchFocus = self.viewModel.forecastData.isEmpty
+                
+                updateLoading()
+                
+                if self.viewModel.todayWeatherDetails != nil {
+                    
+                } else {
+                    self.viewModel.setupCoreDataWeatherView(cityFetchedResults: self.cityFetchedResults,
+                                                            viewContext: viewContext)
+                }
+            }
         }
         .onChange(of: selectedCity) {
             isShowingSaveButton = false
@@ -116,30 +109,35 @@ struct WeatherView: View {
             if let selectedCity = selectedCity {
                 self.viewModel.todayWeatherDetails = selectedCity
                 
-                self.viewModel.getFavCityForecast(favouriteCity: self.viewModel.todayWeatherDetails.city,
+                self.viewModel.getFavCityForecast(favouriteCity: selectedCity.city,
                                                   viewContext: self.viewContext)
-                
-                printCoreData()
             } else {
                 citySearchFocus = true
                 self.viewModel.todayWeatherDetails = self.viewModel.todayWeatherDetails
             }
         }
-        .tint(Color.white)
-    }
-    
-    func printCoreData() {
-        for city in cityFetchedResults {
-            print("The stored city name in \(cityFetchedResults.firstIndex(of: city)) is \(city.cityName)")
-            print("The stored city currentTemp in \(String(describing: city.index)) is \(city.currentTemp)")
-            print("The stored city maxTemP in \(String(describing: city.index)) is \(city.maxTemp)")
+        .toolbar {
+            ToolbarItemGroup(placement: .bottomBar) {
+                createToolBar()
+                    .popover(isPresented: $isFavePopoverPresented) {
+                        
+                        FavouritesListView(selection: $selectedCity,
+                                           cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+                        
+                        .presentationCompactAdaptation(.sheet)
+                        .presentationDetents([.height(375)])
+                    }
+            }
         }
-        
-        for forecast in forecastFetchedResults {
-            print("The stored forecast name in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.cityName)")
-            print("The stored forecast condition in \(forecastFetchedResults.firstIndex(of: forecast)) is \(forecast.condition)")
-            print("The stored forecast currentTemp in \(String(describing: forecast.index)) is \(forecast.currentTemp)")
-            print("The stored forecast maxTemP in \(String(describing: forecast.index)) is \(forecast.dayOfWeek)")
+        .tint(Color.white)
+        //TODO: Review why the accentColor changes back to blue
+        .toolbarBackground(setupViewTheme().backgroundColor,
+                           for: .bottomBar)
+        .navigationDestination(isPresented: $isMapShown) {
+            if let selectedCity = self.viewModel.todayWeatherDetails {
+                MapView(todayWeatherDetails: selectedCity,
+                        cityList: self.viewModel.getFavouriteCities(fetchedResults: cityFetchedResults))
+            }
         }
     }
     
@@ -151,12 +149,16 @@ struct WeatherView: View {
     }
 }
 
+// MARK: Preview Section
 #Preview {
     let viewModel = WeatherViewModel(weatherDetails: TodaysWeatherDetails(city: WeatherConstants.previewCity,
                                                                           minTemperature: WeatherConstants.previewCityMinTempTitle,
                                                                           currentTemperature: WeatherConstants.previewCityTempTitle,
                                                                           maxTemperature: WeatherConstants.previewCityMaxTempTitle,
-                                                                          id: 0, dt: 1748206800),
+                                                                          id: 0,
+                                                                          dt: 1748206800,
+                                                                          lat: 18.55,
+                                                                          lon: -33.82),
                                      weatherForcast: WeatherConstants.previewForecast)
     
     WeatherView(viewModel: viewModel)

@@ -2,7 +2,7 @@
 //  FavouriteCity+CoreDataProperties.swift
 //  Forecaster
 //
-//  Created by Sizwe Khathi on 2025/05/23.
+//  Created by Sizwe Khathi on 2025/05/25.
 //
 //
 
@@ -17,13 +17,15 @@ extension FavouriteCity {
     }
 
     @NSManaged public var cityName: String
-    @NSManaged public var itemIdentifier: UUID
-    @NSManaged public var timeStamp: Int32
-    @NSManaged public var minTemp: String
-    @NSManaged public var maxTemp: String
     @NSManaged public var currentTemp: String
+    @NSManaged public var itemIdentifier: UUID
+    @NSManaged public var maxTemp: String
+    @NSManaged public var minTemp: String
+    @NSManaged public var timeStamp: Int32
     @NSManaged public var cityCondition: Int16
-    @NSManaged public var forecast: NSSet
+    @NSManaged public var lat: Double
+    @NSManaged public var lon: Double
+    @NSManaged public var forecast: NSSet?
 
 }
 

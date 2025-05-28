@@ -29,5 +29,5 @@ struct Sys: Codable {
 }
 
 struct Location: Codable {
-    var lon, lat: Double?
+    var lon, lat: Double
 }

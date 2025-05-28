@@ -24,14 +24,26 @@ struct ShortLoaderAlertView: View {
                     ProgressView()
                         .progressViewStyle(.circular)
                         .rotationEffect(.degrees(isRotating))
-                        .scaleEffect(2)
+                        .scaleEffect(1.5)
                         .tint(.red)
+                    Text(WeatherConstants.loaderText)
+                        .font(.headline)
+                        .frame(width: UIScreen.main.bounds.width / 2,
+                               height: UIScreen.main.bounds.height / 20,
+                               alignment: .center)
+                        .foregroundStyle(.red)
                 }
-            }.frame(minHeight: 150, idealHeight: 182, maxHeight: 200)
-                .padding()
+            }
+            .frame(minHeight: 150, idealHeight: 182, maxHeight: 200)
+            .padding()
             Spacer()
             
         }.background(VisualEffectView(effect: UIBlurEffect(style: .dark))
             .edgesIgnoringSafeArea(.all))
     }
 }
+
+#Preview {
+    ShortLoaderAlertView()
+}
+

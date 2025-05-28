@@ -17,7 +17,6 @@ struct ForecastList: Codable, Identifiable {
     var temperature: String {
         return "\(Int(temp.temp))º"
     }
-    
    
     enum CodingKeys: String, CodingKey {
         case dt
@@ -28,4 +27,8 @@ struct ForecastList: Codable, Identifiable {
 
 struct Temp: Codable {
     var temp: Double
+    
+    enum CodingKeys: String, CodingKey {
+        case temp
+    }
 }
